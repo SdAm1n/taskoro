@@ -14,7 +14,7 @@ class CustomTextField extends StatelessWidget {
   final FocusNode? focusNode;
 
   const CustomTextField({
-    Key? key,
+    super.key,
     required this.controller,
     required this.hintText,
     this.prefixIcon,
@@ -25,7 +25,7 @@ class CustomTextField extends StatelessWidget {
     this.enabled = true,
     this.maxLines = 1,
     this.focusNode,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

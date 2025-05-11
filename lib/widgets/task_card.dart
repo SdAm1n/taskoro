@@ -13,13 +13,13 @@ class TaskCard extends StatelessWidget {
   final bool isCompact;
 
   const TaskCard({
-    Key? key,
+    super.key,
     required this.task,
     required this.onTap,
     required this.onDelete,
     required this.onToggleCompleted,
     this.isCompact = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -112,16 +112,16 @@ class TaskCard extends StatelessWidget {
                   Row(
                     children: [
                       Icon(
-                        Icons.calendar_today,
+                        Icons.event_available,
                         size: isCompact ? 14 : 16,
-                        color: _getDueDateColor(task.dueDate, context),
+                        color: _getDueDateColor(task.endDate, context),
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        DateFormat('MMM dd, yyyy').format(task.dueDate),
+                        DateFormat('MMM dd, yyyy').format(task.endDate),
                         style: TextStyle(
                           fontSize: isCompact ? 12 : 14,
-                          color: _getDueDateColor(task.dueDate, context),
+                          color: _getDueDateColor(task.endDate, context),
                         ),
                       ),
                     ],
@@ -181,13 +181,13 @@ class TaskCard extends StatelessWidget {
     );
   }
 
-  Color _getDueDateColor(DateTime dueDate, BuildContext context) {
+  Color _getDueDateColor(DateTime endDate, BuildContext context) {
     final now = DateTime.now();
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    if (dueDate.isBefore(DateTime(now.year, now.month, now.day))) {
+    if (endDate.isBefore(DateTime(now.year, now.month, now.day))) {
       return AppTheme.accentRed; // Overdue
-    } else if (dueDate.isAtSameMomentAs(
+    } else if (endDate.isAtSameMomentAs(
       DateTime(now.year, now.month, now.day),
     )) {
       return AppTheme.accentYellow; // Due today

@@ -13,7 +13,7 @@ import 'add_edit_task_screen.dart';
 class TaskDetailScreen extends StatelessWidget {
   final String taskId;
 
-  const TaskDetailScreen({Key? key, required this.taskId}) : super(key: key);
+  const TaskDetailScreen({super.key, required this.taskId});
 
   @override
   Widget build(BuildContext context) {
@@ -80,20 +80,44 @@ class TaskDetailScreen extends StatelessWidget {
                 children: [
                   _buildInfoCard(
                     context,
-                    'Due Date',
-                    DateFormat('MMM dd, yyyy').format(task.dueDate),
+                    'Start Date',
+                    DateFormat('MMM dd, yyyy').format(task.startDate),
                     Icons.calendar_today,
-                    _getDueDateColor(task.dueDate, context),
+                    AppTheme.primaryColor,
                   ),
                   const SizedBox(width: 16),
                   _buildInfoCard(
                     context,
-                    'Category',
-                    task.getCategoryString(),
-                    Icons.category,
-                    AppTheme.primaryColor,
+                    'End Date',
+                    DateFormat('MMM dd, yyyy').format(task.endDate),
+                    Icons.event_available,
+                    _getDueDateColor(task.endDate, context),
                   ),
                 ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // Category
+              _buildInfoCard(
+                context,
+                'Category',
+                task.getCategoryString(),
+                Icons.category,
+                AppTheme.primaryColor,
+                fullWidth: true,
+              ),
+
+              const SizedBox(height: 24),
+
+              // Category
+              _buildInfoCard(
+                context,
+                'Category',
+                task.getCategoryString(),
+                Icons.category,
+                AppTheme.primaryColor,
+                fullWidth: true,
               ),
 
               const SizedBox(height: 24),
@@ -242,40 +266,41 @@ class TaskDetailScreen extends StatelessWidget {
     String label,
     String value,
     IconData icon,
-    Color iconColor,
-  ) {
+    Color iconColor, {
+    bool fullWidth = false,
+  }) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDarkMode ? AppTheme.darkCardColor : AppTheme.lightCardColor,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 18, color: iconColor),
-                const SizedBox(width: 6),
-                Text(label, style: Theme.of(context).textTheme.bodyMedium),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
+    Widget cardContent = Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDarkMode ? AppTheme.darkCardColor : AppTheme.lightCardColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: iconColor),
+              const SizedBox(width: 6),
+              Text(label, style: Theme.of(context).textTheme.bodyMedium),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
+
+    return fullWidth ? cardContent : Expanded(child: cardContent);
   }
 
   Color _getDueDateColor(DateTime dueDate, BuildContext context) {

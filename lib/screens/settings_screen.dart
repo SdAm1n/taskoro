@@ -5,9 +5,13 @@ import '../services/task_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_app_bar.dart';
 import 'edit_profile_screen.dart';
+import 'app_version_screen.dart';
+import 'rate_app_screen.dart';
+import 'help_support_screen.dart';
+import 'privacy_policy_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({Key? key}) : super(key: key);
+  const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -233,6 +237,14 @@ class SettingsScreen extends StatelessWidget {
               title: 'App Version',
               subtitle: '1.0.0',
               isDarkMode: isDarkMode,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AppVersionScreen(),
+                  ),
+                );
+              },
             ),
 
             _buildSettingItem(
@@ -240,6 +252,14 @@ class SettingsScreen extends StatelessWidget {
               icon: Icons.star_outline,
               title: 'Rate App',
               isDarkMode: isDarkMode,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const RateAppScreen(),
+                  ),
+                );
+              },
             ),
 
             _buildSettingItem(
@@ -247,6 +267,14 @@ class SettingsScreen extends StatelessWidget {
               icon: Icons.support_outlined,
               title: 'Help & Support',
               isDarkMode: isDarkMode,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const HelpSupportScreen(),
+                  ),
+                );
+              },
             ),
 
             _buildSettingItem(
@@ -254,6 +282,14 @@ class SettingsScreen extends StatelessWidget {
               icon: Icons.privacy_tip_outlined,
               title: 'Privacy Policy',
               isDarkMode: isDarkMode,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PrivacyPolicyScreen(),
+                  ),
+                );
+              },
             ),
 
             const SizedBox(height: 24),
@@ -297,57 +333,61 @@ class SettingsScreen extends StatelessWidget {
     required String title,
     String? subtitle,
     required bool isDarkMode,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: isDarkMode ? AppTheme.darkCardColor : AppTheme.lightCardColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: AppTheme.primaryColor),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color:
-                        isDarkMode
-                            ? AppTheme.darkPrimaryTextColor
-                            : AppTheme.lightPrimaryTextColor,
-                  ),
-                ),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 4),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: isDarkMode ? AppTheme.darkCardColor : AppTheme.lightCardColor,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: AppTheme.primaryColor),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    subtitle,
+                    title,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 16,
                       color:
                           isDarkMode
-                              ? AppTheme.darkSecondaryTextColor
-                              : AppTheme.lightSecondaryTextColor,
+                              ? AppTheme.darkPrimaryTextColor
+                              : AppTheme.lightPrimaryTextColor,
                     ),
                   ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color:
+                            isDarkMode
+                                ? AppTheme.darkSecondaryTextColor
+                                : AppTheme.lightSecondaryTextColor,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-          Icon(
-            Icons.arrow_forward_ios,
-            size: 16,
-            color:
-                isDarkMode
-                    ? AppTheme.darkSecondaryTextColor
-                    : AppTheme.lightSecondaryTextColor,
-          ),
-        ],
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color:
+                  isDarkMode
+                      ? AppTheme.darkSecondaryTextColor
+                      : AppTheme.lightSecondaryTextColor,
+            ),
+          ],
+        ),
       ),
     );
   }

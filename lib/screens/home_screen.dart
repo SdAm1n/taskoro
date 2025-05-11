@@ -8,7 +8,7 @@ import '../widgets/task_card.dart';
 import 'edit_profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -44,8 +44,8 @@ class _HomeScreenState extends State<HomeScreen> {
           case 2: // Upcoming
             _filteredTasks =
                 taskProvider.tasks.where((task) {
-                  return task.dueDate.isAfter(DateTime.now()) &&
-                      task.dueDate.difference(DateTime.now()).inDays <= 7;
+                  return task.endDate.isAfter(DateTime.now()) &&
+                      task.endDate.difference(DateTime.now()).inDays <= 7;
                 }).toList();
             break;
           case 3: // Completed

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/user.dart';
 import '../services/task_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_app_bar.dart';
@@ -8,7 +7,7 @@ import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
 
 class EditProfileScreen extends StatefulWidget {
-  const EditProfileScreen({Key? key}) : super(key: key);
+  const EditProfileScreen({super.key});
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -85,7 +84,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   children: [
                     CircleAvatar(
                       radius: 50,
-                      backgroundColor: AppTheme.primaryColor.withOpacity(0.2),
+                      backgroundColor: Color.fromRGBO(
+                        AppTheme.primaryColor.red,
+                        AppTheme.primaryColor.green,
+                        AppTheme.primaryColor.blue,
+                        0.2,
+                      ),
                       child: Text(
                         _nameController.text.isNotEmpty
                             ? _nameController.text[0].toUpperCase()

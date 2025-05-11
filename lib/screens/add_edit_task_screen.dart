@@ -11,7 +11,9 @@ import '../widgets/custom_text_field.dart';
 class AddEditTaskScreen extends StatefulWidget {
   final Task? task; // If null, we're adding a new task; otherwise, editing
 
-  const AddEditTaskScreen({Key? key, this.task}) : super(key: key);
+  // const AddEditTaskScreen({Key? key, this.task}) : super(key: key);
+  const AddEditTaskScreen({super.key, this.task});
+
 
   @override
   State<AddEditTaskScreen> createState() => _AddEditTaskScreenState();
@@ -21,7 +23,8 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
-  late DateTime _selectedDate;
+  late DateTime _selectedStartDate;
+  late DateTime _selectedEndDate;
   late TaskPriority _selectedPriority;
   late TaskCategory _selectedCategory;
 
@@ -38,8 +41,15 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
     );
 
     // Initialize selectors
-    _selectedDate =
-        widget.task?.dueDate ?? DateTime.now().add(const Duration(days: 1));
+    if (isEditing) {
+      _selectedStartDate = widget.task!.startDate;
+      _selectedEndDate = widget.task!.endDate;
+    } else {
+      // For new tasks, set default dates
+      _selectedStartDate = DateTime.now();
+      _selectedEndDate = DateTime.now().add(const Duration(days: 1));
+    }
+
     _selectedPriority = widget.task?.priority ?? TaskPriority.medium;
     _selectedCategory = widget.task?.category ?? TaskCategory.personal;
   }
@@ -62,7 +72,8 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                 : DateTime.now().millisecondsSinceEpoch.toString(),
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
-        dueDate: _selectedDate,
+        startDate: _selectedStartDate,
+        endDate: _selectedEndDate,
         priority: _selectedPriority,
         category: _selectedCategory,
         isCompleted: isEditing ? widget.task!.isCompleted : false,
@@ -79,12 +90,12 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
     }
   }
 
-  Future<void> _selectDate(BuildContext context) async {
+  Future<void> _selectStartDate(BuildContext context) async {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime.now(),
+      initialDate: _selectedStartDate,
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {
         return Theme(
@@ -111,9 +122,55 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       },
     );
 
-    if (picked != null && picked != _selectedDate) {
+    if (picked != null && picked != _selectedStartDate) {
       setState(() {
-        _selectedDate = picked;
+        _selectedStartDate = picked;
+        // If end date is before start date, update end date
+        if (_selectedEndDate.isBefore(_selectedStartDate)) {
+          _selectedEndDate = _selectedStartDate.add(const Duration(days: 1));
+        }
+      });
+    }
+  }
+
+  Future<void> _selectEndDate(BuildContext context) async {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate:
+          _selectedEndDate.isAfter(_selectedStartDate)
+              ? _selectedEndDate
+              : _selectedStartDate.add(const Duration(days: 1)),
+      firstDate: _selectedStartDate,
+      lastDate: _selectedStartDate.add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: AppTheme.primaryColor,
+              onPrimary: Colors.white,
+              onSurface:
+                  isDarkMode
+                      ? AppTheme.darkPrimaryTextColor
+                      : AppTheme.lightPrimaryTextColor,
+              surface:
+                  isDarkMode
+                      ? AppTheme.darkSurfaceColor
+                      : AppTheme.lightSurfaceColor,
+            ),
+            dialogBackgroundColor:
+                isDarkMode
+                    ? AppTheme.darkBackgroundColor
+                    : AppTheme.lightBackgroundColor,
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null && picked != _selectedEndDate) {
+      setState(() {
+        _selectedEndDate = picked;
       });
     }
   }
@@ -166,40 +223,131 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
 
                 const SizedBox(height: 24),
 
-                // Due date picker
-                Text('Due Date', style: Theme.of(context).textTheme.bodyLarge),
+                // Date pickers
+                Text(
+                  'Task Date Range',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
                 const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: () => _selectDate(context),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
+
+                // Start date picker
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Start Date',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.copyWith(
+                              color:
+                                  isDarkMode
+                                      ? AppTheme.darkSecondaryTextColor
+                                      : AppTheme.lightSecondaryTextColor,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          GestureDetector(
+                            onTap: () => _selectStartDate(context),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    isDarkMode
+                                        ? AppTheme.darkSurfaceColor
+                                        : AppTheme.lightSurfaceColor,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    DateFormat(
+                                      'MMM dd, yyyy',
+                                    ).format(_selectedStartDate),
+                                    style:
+                                        Theme.of(context).textTheme.bodyMedium,
+                                  ),
+                                  Icon(
+                                    Icons.calendar_today,
+                                    size: 16,
+                                    color:
+                                        isDarkMode
+                                            ? AppTheme.darkSecondaryTextColor
+                                            : AppTheme.lightSecondaryTextColor,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    decoration: BoxDecoration(
-                      color:
-                          isDarkMode
-                              ? AppTheme.darkSurfaceColor
-                              : AppTheme.lightSurfaceColor,
-                      borderRadius: BorderRadius.circular(10),
+                    const SizedBox(width: 16),
+                    // End date picker
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'End Date',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.copyWith(
+                              color:
+                                  isDarkMode
+                                      ? AppTheme.darkSecondaryTextColor
+                                      : AppTheme.lightSecondaryTextColor,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          GestureDetector(
+                            onTap: () => _selectEndDate(context),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    isDarkMode
+                                        ? AppTheme.darkSurfaceColor
+                                        : AppTheme.lightSurfaceColor,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    DateFormat(
+                                      'MMM dd, yyyy',
+                                    ).format(_selectedEndDate),
+                                    style:
+                                        Theme.of(context).textTheme.bodyMedium,
+                                  ),
+                                  Icon(
+                                    Icons.calendar_today,
+                                    size: 16,
+                                    color:
+                                        isDarkMode
+                                            ? AppTheme.darkSecondaryTextColor
+                                            : AppTheme.lightSecondaryTextColor,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          DateFormat('MMMM dd, yyyy').format(_selectedDate),
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                        Icon(
-                          Icons.calendar_today,
-                          color:
-                              isDarkMode
-                                  ? AppTheme.darkSecondaryTextColor
-                                  : AppTheme.lightSecondaryTextColor,
-                        ),
-                      ],
-                    ),
-                  ),
+                  ],
                 ),
 
                 const SizedBox(height: 24),

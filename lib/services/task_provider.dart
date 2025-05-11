@@ -19,7 +19,8 @@ class TaskProvider extends ChangeNotifier {
       title: 'Create UI design for mobile app',
       description:
           'Complete the UI design for the new mobile application. Include all screens and components.',
-      dueDate: DateTime.now().add(const Duration(days: 2)),
+      startDate: DateTime.now(),
+      endDate: DateTime.now().add(const Duration(days: 2)),
       priority: TaskPriority.high,
       category: TaskCategory.work,
       createdAt: DateTime.now().subtract(const Duration(days: 1)),
@@ -28,7 +29,8 @@ class TaskProvider extends ChangeNotifier {
       id: '2',
       title: 'Buy groceries',
       description: 'Milk, eggs, bread, fruits, vegetables',
-      dueDate: DateTime.now().add(const Duration(days: 1)),
+      startDate: DateTime.now(),
+      endDate: DateTime.now().add(const Duration(days: 1)),
       priority: TaskPriority.medium,
       category: TaskCategory.shopping,
       createdAt: DateTime.now().subtract(const Duration(days: 2)),
@@ -37,7 +39,8 @@ class TaskProvider extends ChangeNotifier {
       id: '3',
       title: 'Workout session',
       description: '30 min cardio, 30 min strength training',
-      dueDate: DateTime.now(),
+      startDate: DateTime.now(),
+      endDate: DateTime.now(),
       priority: TaskPriority.low,
       category: TaskCategory.health,
       createdAt: DateTime.now().subtract(const Duration(days: 1)),
@@ -46,7 +49,8 @@ class TaskProvider extends ChangeNotifier {
       id: '4',
       title: 'Team meeting',
       description: 'Discuss project progress and next steps with the team',
-      dueDate: DateTime.now().add(const Duration(days: 3)),
+      startDate: DateTime.now().add(const Duration(days: 2)),
+      endDate: DateTime.now().add(const Duration(days: 3)),
       priority: TaskPriority.high,
       category: TaskCategory.work,
       createdAt: DateTime.now().subtract(const Duration(hours: 12)),
@@ -55,7 +59,8 @@ class TaskProvider extends ChangeNotifier {
       id: '5',
       title: 'Call mom',
       description: "Don't forget to wish her happy birthday!",
-      dueDate: DateTime.now().add(const Duration(days: 1)),
+      startDate: DateTime.now(),
+      endDate: DateTime.now().add(const Duration(days: 1)),
       priority: TaskPriority.medium,
       category: TaskCategory.personal,
       createdAt: DateTime.now().subtract(const Duration(days: 3)),
@@ -83,9 +88,10 @@ class TaskProvider extends ChangeNotifier {
   // Filter tasks by date
   List<Task> getTasksForDate(DateTime date) {
     return _tasks.where((task) {
-      return task.dueDate.year == date.year &&
-          task.dueDate.month == date.month &&
-          task.dueDate.day == date.day;
+      // A task is for a specific date if the date falls within its date range (inclusive)
+      return (date.isAtSameMomentAs(task.startDate) ||
+              date.isAfter(task.startDate)) &&
+          (date.isAtSameMomentAs(task.endDate) || date.isBefore(task.endDate));
     }).toList();
   }
 
@@ -135,7 +141,8 @@ class TaskProvider extends ChangeNotifier {
   void sortTasks(String sortBy) {
     switch (sortBy) {
       case 'dueDate':
-        _tasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+        // Sort by end date as that represents the due date
+        _tasks.sort((a, b) => a.endDate.compareTo(b.endDate));
         break;
       case 'priority':
         _tasks.sort((a, b) => b.priority.index.compareTo(a.priority.index));

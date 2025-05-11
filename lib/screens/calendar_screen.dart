@@ -10,7 +10,7 @@ import '../widgets/custom_app_bar.dart';
 import '../widgets/task_card.dart';
 
 class CalendarScreen extends StatefulWidget {
-  const CalendarScreen({Key? key}) : super(key: key);
+  const CalendarScreen({super.key});
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();

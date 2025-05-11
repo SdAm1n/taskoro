@@ -12,14 +12,14 @@ class TaskList extends StatelessWidget {
   final String emptyStateText;
 
   const TaskList({
-    Key? key,
+    super.key,
     required this.tasks,
     required this.onTaskTap,
     required this.onTaskDelete,
     required this.onTaskToggle,
     this.showEmptyState = true,
     this.emptyStateText = 'No tasks found',
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +44,7 @@ class TaskList extends StatelessWidget {
 
   Widget _buildEmptyState(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -52,9 +52,10 @@ class TaskList extends StatelessWidget {
           Icon(
             Icons.check_circle_outline,
             size: 64,
-            color: (isDarkMode 
-                ? AppTheme.darkSecondaryTextColor 
-                : AppTheme.lightSecondaryTextColor).withOpacity(0.5),
+            color: (isDarkMode
+                    ? AppTheme.darkSecondaryTextColor
+                    : AppTheme.lightSecondaryTextColor)
+                .withOpacity(0.5),
           ),
           const SizedBox(height: 16),
           Text(
@@ -62,9 +63,10 @@ class TaskList extends StatelessWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: (isDarkMode 
-                  ? AppTheme.darkSecondaryTextColor 
-                  : AppTheme.lightSecondaryTextColor).withOpacity(0.7),
+              color: (isDarkMode
+                      ? AppTheme.darkSecondaryTextColor
+                      : AppTheme.lightSecondaryTextColor)
+                  .withOpacity(0.7),
             ),
           ),
           const SizedBox(height: 8),
@@ -72,9 +74,10 @@ class TaskList extends StatelessWidget {
             emptyStateText,
             style: TextStyle(
               fontSize: 14,
-              color: (isDarkMode 
-                  ? AppTheme.darkSecondaryTextColor 
-                  : AppTheme.lightSecondaryTextColor).withOpacity(0.7),
+              color: (isDarkMode
+                      ? AppTheme.darkSecondaryTextColor
+                      : AppTheme.lightSecondaryTextColor)
+                  .withOpacity(0.7),
             ),
             textAlign: TextAlign.center,
           ),

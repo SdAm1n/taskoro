@@ -6,7 +6,8 @@ class Task {
   final String id;
   final String title;
   final String description;
-  final DateTime dueDate;
+  final DateTime startDate;
+  final DateTime endDate;
   final TaskPriority priority;
   final TaskCategory category;
   final bool isCompleted;
@@ -17,7 +18,8 @@ class Task {
     required this.id,
     required this.title,
     required this.description,
-    required this.dueDate,
+    required this.startDate,
+    required this.endDate,
     required this.priority,
     required this.category,
     this.isCompleted = false,
@@ -29,7 +31,8 @@ class Task {
     String? id,
     String? title,
     String? description,
-    DateTime? dueDate,
+    DateTime? startDate,
+    DateTime? endDate,
     TaskPriority? priority,
     TaskCategory? category,
     bool? isCompleted,
@@ -40,7 +43,8 @@ class Task {
       id: id ?? this.id,
       title: title ?? this.title,
       description: description ?? this.description,
-      dueDate: dueDate ?? this.dueDate,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
       priority: priority ?? this.priority,
       category: category ?? this.category,
       isCompleted: isCompleted ?? this.isCompleted,
@@ -55,7 +59,8 @@ class Task {
       'id': id,
       'title': title,
       'description': description,
-      'dueDate': dueDate.millisecondsSinceEpoch,
+      'startDate': startDate.millisecondsSinceEpoch,
+      'endDate': endDate.millisecondsSinceEpoch,
       'priority': priority.toString().split('.').last,
       'category': category.toString().split('.').last,
       'isCompleted': isCompleted,
@@ -70,7 +75,8 @@ class Task {
       id: map['id'],
       title: map['title'],
       description: map['description'],
-      dueDate: DateTime.fromMillisecondsSinceEpoch(map['dueDate']),
+      startDate: DateTime.fromMillisecondsSinceEpoch(map['startDate']),
+      endDate: DateTime.fromMillisecondsSinceEpoch(map['endDate']),
       priority: TaskPriority.values.firstWhere(
         (e) => e.toString().split('.').last == map['priority'],
         orElse: () => TaskPriority.medium,

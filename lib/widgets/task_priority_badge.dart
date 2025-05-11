@@ -6,10 +6,10 @@ class TaskPriorityBadge extends StatelessWidget {
   final bool isSmall;
 
   const TaskPriorityBadge({
-    Key? key,
+    super.key,
     required this.priority,
     this.isSmall = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
