@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Shared colors
-  static const Color primaryColor = Color(0xFF8875FF); // Purple
+  static const Color primaryColor = Color(0xFF6369D9); // Blue-purple
 
   // Dark theme colors
   static const Color darkBackgroundColor = Color(0xFF121212); // Dark background
@@ -35,7 +35,7 @@ class AppTheme {
 
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFF8875FF), Color(0xFFA35FFF)],
+    colors: [Color(0xFF6369D9), Color(0xFF8A8EF0)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -61,7 +61,7 @@ class AppTheme {
         selectedItemColor: primaryColor,
         unselectedItemColor: darkSecondaryTextColor,
       ),
-      textTheme: GoogleFonts.latoTextTheme(
+      textTheme: GoogleFonts.poppinsTextTheme(
         const TextTheme(
           displayLarge: TextStyle(
             color: darkPrimaryTextColor,
@@ -99,18 +99,18 @@ class AppTheme {
         primary: primaryColor,
         secondary: primaryColor,
         surface: darkSurfaceColor,
-        background: darkBackgroundColor,
+        // background: darkBackgroundColor,
         error: accentRed,
         onPrimary: darkPrimaryTextColor,
         onSecondary: darkPrimaryTextColor,
         onSurface: darkPrimaryTextColor,
-        onBackground: darkPrimaryTextColor,
+        // onBackground: darkPrimaryTextColor,
         onError: darkPrimaryTextColor,
         brightness: Brightness.dark,
       ),
       checkboxTheme: CheckboxThemeData(
-        fillColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return primaryColor;
           }
           return Colors.transparent;
@@ -176,7 +176,7 @@ class AppTheme {
         selectedItemColor: primaryColor,
         unselectedItemColor: lightSecondaryTextColor,
       ),
-      textTheme: GoogleFonts.latoTextTheme(
+      textTheme: GoogleFonts.poppinsTextTheme(
         const TextTheme(
           displayLarge: TextStyle(
             color: lightPrimaryTextColor,

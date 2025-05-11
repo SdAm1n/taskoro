@@ -1,0 +1,17 @@
+import 'package:flutter/material.dart';
+
+// This class creates a widget that blocks the back button
+// Perfect for screens where you don't want the user to go back with the device back button
+class NoBackWidget extends StatelessWidget {
+  final Widget child;
+
+  const NoBackWidget({Key? key, required this.child}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async => false, // This disables the back button
+      child: child,
+    );
+  }
+}

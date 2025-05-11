@@ -35,7 +35,7 @@ class AnalyticsScreen extends StatelessWidget {
           isDarkMode
               ? AppTheme.darkBackgroundColor
               : AppTheme.lightBackgroundColor,
-      appBar: CustomAppBar(title: 'Analytics', showBackButton: false),
+      appBar: CustomAppBar(title: 'Analytics'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(

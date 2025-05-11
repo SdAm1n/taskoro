@@ -8,6 +8,7 @@ import 'screens/splash_screen.dart';
 import 'services/task_provider.dart';
 import 'services/theme_provider.dart';
 import 'theme/app_theme.dart';
+import 'utils/custom_page_route.dart';
 import 'package:flutter/services.dart';
 
 void main() {
@@ -56,6 +57,10 @@ class MyApp extends StatelessWidget {
                 themeProvider.isDarkMode
                     ? AppTheme.darkTheme
                     : AppTheme.lightTheme,
+            // Use a custom page route to prevent automatic back button
+            builder: (context, child) {
+              return child!; // Return without any modifications
+            },
             initialRoute: '/splash',
             routes: {
               '/splash': (context) => const SplashScreen(),
@@ -64,11 +69,13 @@ class MyApp extends StatelessWidget {
               '/add_task': (context) => const AddEditTaskScreen(),
             },
             onGenerateRoute: (settings) {
+              // Special case for task detail
               if (settings.name == '/task_detail') {
                 final args = settings.arguments as Map<String, dynamic>;
-                return MaterialPageRoute(
+                return NoBackButtonPageRoute(
                   builder:
                       (context) => TaskDetailScreen(taskId: args['taskId']),
+                  fullscreenDialog: true,
                 );
               }
               return null;

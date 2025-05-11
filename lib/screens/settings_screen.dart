@@ -20,7 +20,7 @@ class SettingsScreen extends StatelessWidget {
           isDarkMode
               ? AppTheme.darkBackgroundColor
               : AppTheme.lightBackgroundColor,
-      appBar: CustomAppBar(title: 'Settings', showBackButton: false),
+      appBar: CustomAppBar(title: 'Settings'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -253,20 +253,28 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Logout button
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Text(
-                  'Logout',
-                  style: TextStyle(
-                    color: AppTheme.accentRed,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+            GestureDetector(
+              onTap: () {
+                // Navigate to welcome screen (logout functionality)
+                Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil('/', (route) => false);
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    'Logout',
+                    style: TextStyle(
+                      color: AppTheme.accentRed,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),

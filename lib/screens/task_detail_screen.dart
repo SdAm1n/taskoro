@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/task_priority_badge.dart';
+import '../utils/custom_page_route.dart';
 import 'add_edit_task_screen.dart';
 
 class TaskDetailScreen extends StatelessWidget {
@@ -33,8 +34,9 @@ class TaskDetailScreen extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
+                NoBackButtonPageRoute(
                   builder: (context) => AddEditTaskScreen(task: task),
+                  fullscreenDialog: true,
                 ),
               );
             },

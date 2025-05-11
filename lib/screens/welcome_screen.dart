@@ -44,19 +44,21 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 16.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 40),
-
+                const SizedBox(height: 20), // Reduced from 40
                 // App logo and name
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      width: 50,
-                      height: 50,
+                      width: 40, // Reduced from 50
+                      height: 40, // Reduced from 50
                       decoration: BoxDecoration(
                         gradient: AppTheme.primaryGradient,
                         borderRadius: BorderRadius.circular(12),
@@ -64,26 +66,34 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       child: const Icon(
                         Icons.check_rounded,
                         color: Colors.white,
-                        size: 30,
+                        size: 24, // Reduced from 30
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'TASKORO',
-                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
+                    const SizedBox(width: 14), // Reduced from 12
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'TASKORO',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.displayMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                            fontSize: 24, // Reduced font size
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 60),
-
+                const SizedBox(height: 60), // Reduced from 60
                 // Welcome text
                 Text(
                   _isLogin ? 'Welcome Back!' : 'Create Account',
-                  style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    // Changed from displayMedium to displaySmall
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -97,8 +107,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
 
-                const SizedBox(height: 40),
-
+                const SizedBox(height: 20), // Reduced from 40
                 // Form
                 Form(
                   key: _formKey,
@@ -122,7 +131,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 12), // Reduced from 20
                       ],
 
                       Text(
@@ -148,7 +157,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         },
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12), // Reduced from 20
 
                       Text(
                         'Password',
@@ -171,7 +180,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         },
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 8), // Reduced from 16
 
                       if (_isLogin)
                         Align(
@@ -187,8 +196,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 24),
-
+                const SizedBox(height: 16), // Reduced from 24
                 // Submit button
                 CustomButton(
                   text: _isLogin ? 'Sign In' : 'Sign Up',
@@ -219,8 +227,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 32),
-
+                const SizedBox(height: 16), // Reduced from 32
                 // Social login options
                 Column(
                   children: [
@@ -230,7 +237,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8), // Reduced from 16
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -261,7 +268,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         );
       },
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ), // Reduced vertical padding
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
@@ -270,12 +280,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: Colors.red, size: 24),
+            Icon(icon, color: Colors.red, size: 20), // Reduced from size 24
             const SizedBox(width: 8),
             Text(
               'Continue with Google',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 12, // Reduced from 14
                 fontWeight: FontWeight.w500,
                 color: Theme.of(context).textTheme.bodyLarge?.color,
               ),

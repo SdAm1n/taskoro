@@ -51,7 +51,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           isDarkMode
               ? AppTheme.darkBackgroundColor
               : AppTheme.lightBackgroundColor,
-      appBar: CustomAppBar(title: 'Calendar', showBackButton: false),
+      appBar: CustomAppBar(title: 'Calendar'),
       body: Column(
         children: [
           Container(
