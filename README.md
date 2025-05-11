@@ -1,4 +1,4 @@
-# TASKORO - Task Management App
+# TASKORO - Task Management App (Under Development)
 
 A beautiful and intuitive task management application built with Flutter and Firebase.
 
