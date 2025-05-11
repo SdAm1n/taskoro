@@ -149,4 +149,10 @@ class TaskProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  // Update user information
+  void updateUser(AppUser updatedUser) {
+    _currentUser = updatedUser;
+    notifyListeners();
+  }
 }

@@ -5,6 +5,7 @@ import '../models/task.dart';
 import '../services/task_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/task_card.dart';
+import 'edit_profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -92,30 +93,64 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      // Navigate to profile screen
+                      // Navigate to profile edit screen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const EditProfileScreen(),
+                        ),
+                      );
                     },
-                    child: CircleAvatar(
-                      radius: 24,
-                      backgroundColor: AppTheme.primaryColor,
-                      backgroundImage:
-                          user.photoUrl != null
-                              ? NetworkImage(user.photoUrl!)
-                              : null,
-                      child:
-                          user.photoUrl == null
-                              ? Text(
-                                user.displayName.isNotEmpty
-                                    ? user.displayName
-                                        .substring(0, 1)
-                                        .toUpperCase()
-                                    : '?',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                ),
-                              )
-                              : null,
+                    child: Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor: AppTheme.primaryColor,
+                          backgroundImage:
+                              user.photoUrl != null
+                                  ? NetworkImage(user.photoUrl!)
+                                  : null,
+                          child:
+                              user.photoUrl == null
+                                  ? Text(
+                                    user.displayName.isNotEmpty
+                                        ? user.displayName
+                                            .substring(0, 1)
+                                            .toUpperCase()
+                                        : '?',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  )
+                                  : null,
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor.withOpacity(0.8),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color:
+                                    isDarkMode
+                                        ? AppTheme.darkBackgroundColor
+                                        : AppTheme.lightBackgroundColor,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.edit,
+                              color: Colors.white,
+                              size: 8,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

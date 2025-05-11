@@ -4,6 +4,7 @@ import '../services/theme_provider.dart';
 import '../services/task_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_app_bar.dart';
+import 'edit_profile_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -93,7 +94,12 @@ class SettingsScreen extends StatelessWidget {
                     icon: const Icon(Icons.edit_outlined),
                     color: AppTheme.primaryColor,
                     onPressed: () {
-                      // Edit profile functionality could be added here
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const EditProfileScreen(),
+                        ),
+                      );
                     },
                   ),
                 ],
