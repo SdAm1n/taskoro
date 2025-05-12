@@ -113,29 +113,9 @@ class _MainScreenState extends State<MainScreen> {
       },
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+      child: SizedBox(
         width: 70,
         height: 70,
-        decoration: BoxDecoration(
-          border:
-              isSelected
-                  ? Border(
-                    top: BorderSide(color: AppTheme.primaryColor, width: 3),
-                  )
-                  : null,
-          gradient:
-              isSelected
-                  ? LinearGradient(
-                    colors: [
-                      AppTheme.primaryColor.withOpacity(0.1),
-                      Colors.transparent,
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  )
-                  : null,
-        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -143,8 +123,11 @@ class _MainScreenState extends State<MainScreen> {
               isSelected ? activeIcon : icon,
               color:
                   isSelected
-                      ? const Color(0xFF6369D9) // Active color
-                      : const Color(0xFFABCEF5), // Inactive color
+                      ? AppTheme
+                          .primaryColor // Active color
+                      : isDarkMode
+                      ? AppTheme.darkSecondaryTextColor
+                      : AppTheme.lightSecondaryTextColor, // Inactive color
               size: isSelected ? 26 : 22,
             ),
             const SizedBox(height: 4),
@@ -153,10 +136,24 @@ class _MainScreenState extends State<MainScreen> {
               style: TextStyle(
                 color:
                     isSelected
-                        ? const Color(0xFF6369D9) // Active color
-                        : const Color(0xFFABCEF5), // Inactive color
+                        ? AppTheme
+                            .primaryColor // Active color
+                        : isDarkMode
+                        ? AppTheme.darkSecondaryTextColor
+                        : AppTheme.lightSecondaryTextColor, // Inactive color
                 fontSize: isSelected ? 12 : 11,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+            const SizedBox(height: 4),
+            // Small indicator dot for active item
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 3,
+              width: isSelected ? 5 : 0,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor,
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
           ],
