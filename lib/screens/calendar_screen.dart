@@ -6,6 +6,7 @@ import '../services/task_provider.dart';
 import '../services/theme_provider.dart';
 import '../models/task.dart';
 import '../theme/app_theme.dart';
+import '../utils/task_deletion_state.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/task_card.dart';
 
@@ -254,8 +255,78 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             ).then((_) => _updateSelectedDayTasks());
                           },
                           onDelete: () {
-                            taskProvider.deleteTask(task.id);
-                            _updateSelectedDayTasks();
+                            try {
+                              // Mark that we're in a deletion process
+                              TaskDeletionState.markDeletionInProgress();
+
+                              // Store reference to task title before deletion
+                              final taskTitle = task.title;
+
+                              final deleteSuccess = taskProvider.deleteTask(
+                                task.id,
+                              );
+
+                              // Use post frame callback for state update
+                              // Replace with a safer delayed execution approach
+                              Future.delayed(
+                                const Duration(milliseconds: 200),
+                                () {
+                                  if (mounted) {
+                                    _updateSelectedDayTasks();
+
+                                    // Show confirmation message based on success
+                                    if (deleteSuccess) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Task "$taskTitle" deleted',
+                                          ),
+                                          duration: const Duration(seconds: 3),
+                                        ),
+                                      );
+
+                                      // Reset deletion state after showing message
+                                      Future.delayed(
+                                        const Duration(milliseconds: 500),
+                                        () {
+                                          TaskDeletionState.reset();
+                                        },
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Could not delete task',
+                                          ),
+                                          duration: Duration(seconds: 3),
+                                        ),
+                                      );
+
+                                      // Reset deletion state on failure
+                                      TaskDeletionState.reset();
+                                    }
+                                  }
+                                },
+                              );
+                            } catch (e) {
+                              // Handle error with user feedback
+                              debugPrint('Error handling task deletion: $e');
+
+                              // Reset deletion state on error
+                              TaskDeletionState.reset();
+
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error deleting task: $e'),
+                                  ),
+                                );
+                              }
+                            }
                           },
                           onToggleCompleted: () {
                             taskProvider.toggleTaskCompletion(task.id);

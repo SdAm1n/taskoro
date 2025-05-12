@@ -13,7 +13,7 @@ class TaskProvider extends ChangeNotifier {
   );
 
   // Dummy tasks for frontend development
-  List<Task> _tasks = [
+  final List<Task> _tasks = [
     Task(
       id: '1',
       title: 'Create UI design for mobile app',
@@ -122,9 +122,32 @@ class TaskProvider extends ChangeNotifier {
   }
 
   // Delete a task
-  void deleteTask(String taskId) {
-    _tasks.removeWhere((task) => task.id == taskId);
-    notifyListeners();
+  bool deleteTask(String taskId) {
+    try {
+      final taskIndex = _tasks.indexWhere((task) => task.id == taskId);
+      if (taskIndex != -1) {
+        // Remove the task from the list
+        _tasks.removeAt(taskIndex);
+
+        // Immediate notification is important to avoid race conditions
+        // that could cause "task not found" messages to appear before
+        // the success message
+        notifyListeners();
+
+        return true; // Successfully deleted
+      } else {
+        debugPrint('Task not found for deletion: $taskId');
+        return false; // Task not found
+      }
+    } catch (e) {
+      // Handle any errors silently to prevent UI glitches
+      debugPrint('Error deleting task: $e');
+
+      // Still notify listeners to ensure UI is updated
+      notifyListeners();
+
+      return false; // Error during deletion
+    }
   }
 
   // Toggle task completion status

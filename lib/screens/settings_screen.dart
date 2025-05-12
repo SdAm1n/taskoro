@@ -9,6 +9,7 @@ import 'app_version_screen.dart';
 import 'rate_app_screen.dart';
 import 'help_support_screen.dart';
 import 'privacy_policy_screen.dart';
+import '../utils/safe_navigation.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -297,10 +298,51 @@ class SettingsScreen extends StatelessWidget {
             // Logout button
             GestureDetector(
               onTap: () {
-                // Navigate to welcome screen (logout functionality)
-                Navigator.of(
-                  context,
-                ).pushNamedAndRemoveUntil('/', (route) => false);
+                // Confirm before logging out
+                showDialog(
+                  context: context,
+                  builder:
+                      (dialogContext) => AlertDialog(
+                        backgroundColor:
+                            isDarkMode
+                                ? AppTheme.darkSurfaceColor
+                                : AppTheme.lightSurfaceColor,
+                        title: const Text('Logout'),
+                        content: const Text('Are you sure you want to logout?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(dialogContext),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(dialogContext); // Close dialog
+
+                              // Navigate to welcome screen (logout functionality)
+                              // Use a more reliable delayed execution approach
+                              Future.delayed(
+                                const Duration(milliseconds: 300),
+                                () {
+                                  if (context.mounted) {
+                                    // Navigate to welcome screen and clear stack
+                                    Navigator.of(
+                                      context,
+                                    ).pushNamedAndRemoveUntil(
+                                      '/',
+                                      (route) => false,
+                                    );
+                                  }
+                                },
+                              );
+                            },
+                            child: const Text(
+                              'Logout',
+                              style: TextStyle(color: AppTheme.accentRed),
+                            ),
+                          ),
+                        ],
+                      ),
+                );
               },
               child: Container(
                 width: double.infinity,

@@ -5,6 +5,7 @@ import '../models/task.dart';
 import '../services/task_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/task_card.dart';
+import '../utils/task_deletion_state.dart';
 import 'edit_profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -256,8 +257,84 @@ class _HomeScreenState extends State<HomeScreen> {
                                 );
                               },
                               onDelete: () {
-                                taskProvider.deleteTask(task.id);
-                                _updateFilteredTasks();
+                                try {
+                                  // Mark that we're in a deletion process to prevent "task not found" message
+                                  TaskDeletionState.markDeletionInProgress();
+
+                                  // Store a reference to the task title before deletion
+                                  final taskTitle = task.title;
+
+                                  final deleteSuccess = taskProvider.deleteTask(
+                                    task.id,
+                                  );
+
+                                  // Use post frame callback to ensure state is updated properly
+                                  // Replace with a safer delayed execution method
+                                  Future.delayed(
+                                    const Duration(milliseconds: 200),
+                                    () {
+                                      if (mounted) {
+                                        _updateFilteredTasks();
+
+                                        // Show a snackbar confirmation based on success
+                                        if (deleteSuccess) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Task "$taskTitle" deleted',
+                                              ),
+                                              duration: const Duration(
+                                                seconds: 3,
+                                              ),
+                                            ),
+                                          );
+
+                                          // Reset deletion state after showing the message
+                                          Future.delayed(
+                                            const Duration(milliseconds: 500),
+                                            () {
+                                              TaskDeletionState.reset();
+                                            },
+                                          );
+                                        } else {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Could not delete task',
+                                              ),
+                                              duration: Duration(seconds: 3),
+                                            ),
+                                          );
+
+                                          // Reset deletion state on failure
+                                          TaskDeletionState.reset();
+                                        }
+                                      }
+                                    },
+                                  );
+                                } catch (e) {
+                                  // Handle error with user feedback
+                                  debugPrint(
+                                    'Error handling task deletion: $e',
+                                  );
+
+                                  // Reset deletion state on error
+                                  TaskDeletionState.reset();
+
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Error deleting task: $e',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }
                               },
                               onToggleCompleted: () {
                                 taskProvider.toggleTaskCompletion(task.id);

@@ -214,18 +214,16 @@ class AppTheme {
         primary: primaryColor,
         secondary: primaryColor,
         surface: lightSurfaceColor,
-        background: lightBackgroundColor,
         error: accentRed,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
         onSurface: lightPrimaryTextColor,
-        onBackground: lightPrimaryTextColor,
         onError: Colors.white,
         brightness: Brightness.light,
       ),
       checkboxTheme: CheckboxThemeData(
-        fillColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return primaryColor;
           }
           return Colors.transparent;

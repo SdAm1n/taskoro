@@ -223,7 +223,7 @@ class AppVersionScreen extends StatelessWidget {
                   ),
                 ),
               )
-              .toList(),
+              ,
         ],
       ),
     );

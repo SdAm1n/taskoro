@@ -14,7 +14,6 @@ class AddEditTaskScreen extends StatefulWidget {
   // const AddEditTaskScreen({Key? key, this.task}) : super(key: key);
   const AddEditTaskScreen({super.key, this.task});
 
-
   @override
   State<AddEditTaskScreen> createState() => _AddEditTaskScreenState();
 }
@@ -112,10 +111,12 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                       ? AppTheme.darkSurfaceColor
                       : AppTheme.lightSurfaceColor,
             ),
-            dialogBackgroundColor:
-                isDarkMode
-                    ? AppTheme.darkBackgroundColor
-                    : AppTheme.lightBackgroundColor,
+            dialogTheme: DialogThemeData(
+              backgroundColor:
+                  isDarkMode
+                      ? AppTheme.darkBackgroundColor
+                      : AppTheme.lightBackgroundColor,
+            ),
           ),
           child: child!,
         );
@@ -158,10 +159,12 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                       ? AppTheme.darkSurfaceColor
                       : AppTheme.lightSurfaceColor,
             ),
-            dialogBackgroundColor:
-                isDarkMode
-                    ? AppTheme.darkBackgroundColor
-                    : AppTheme.lightBackgroundColor,
+            dialogTheme: DialogThemeData(
+              backgroundColor:
+                  isDarkMode
+                      ? AppTheme.darkBackgroundColor
+                      : AppTheme.lightBackgroundColor,
+            ),
           ),
           child: child!,
         );
@@ -458,6 +461,8 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
         return 'Shopping';
       case TaskCategory.health:
         return 'Health';
+      case TaskCategory.study:
+        return 'Study';
       case TaskCategory.other:
         return 'Other';
     }

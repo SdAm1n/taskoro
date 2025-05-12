@@ -324,6 +324,9 @@ class AnalyticsScreen extends StatelessWidget {
       case TaskCategory.health:
         categoryColor = Colors.green;
         break;
+      case TaskCategory.study:
+        categoryColor = Colors.indigo;
+        break;
       case TaskCategory.other:
         categoryColor = Colors.orange;
         break;

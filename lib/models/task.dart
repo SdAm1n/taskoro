@@ -1,6 +1,6 @@
 enum TaskPriority { low, medium, high }
 
-enum TaskCategory { personal, work, shopping, health, other }
+enum TaskCategory { personal, work, shopping, health, study, other }
 
 class Task {
   final String id;
@@ -115,6 +115,8 @@ class Task {
         return 'Shopping';
       case TaskCategory.health:
         return 'Health';
+      case TaskCategory.study:
+        return 'Study';
       case TaskCategory.other:
         return 'Other';
     }
