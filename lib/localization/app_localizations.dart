@@ -44,6 +44,12 @@ class AppLocalizations {
       'no_completed_tasks': 'You haven\'t completed any tasks yet',
       'no_search_results': 'No tasks match your search',
       'add_task_hint': 'Tap + to add a new task',
+      'my_priority_tasks': 'My Priority Tasks',
+      'view_all': 'View All',
+      'day': 'day',
+      'days': 'days',
+      'progress': 'Progress',
+      'due_date': 'Due Date',
 
       // Task Details
       'task_details': 'Task Details',
@@ -149,6 +155,12 @@ class AppLocalizations {
       'tasks': 'টাস্ক',
       'no_tasks_found': 'কোন টাস্ক পাওয়া যায়নি',
       'no_completed_tasks': 'আপনি এখনও কোন টাস্ক সম্পন্ন করেননি',
+      'my_priority_tasks': 'আমার অগ্রাধিকার টাস্ক',
+      'day': 'দিন',
+      'days': 'দিন',
+      'progress': 'অগ্রগতি',
+      'due_date': 'শেষ তারিখ',
+      'view_all': 'সব দেখুন',
       'no_search_results': 'আপনার অনুসন্ধানের সাথে কোন টাস্ক মেলেনি',
       'add_task_hint': 'নতুন টাস্ক যোগ করতে + ট্যাপ করুন',
 
