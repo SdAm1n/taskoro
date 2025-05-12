@@ -441,64 +441,73 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 14),
 
-                      // Modern Search bar
-                      Container(
-                        height: 45,
-                        decoration: BoxDecoration(
-                          color:
-                              isDarkMode
-                                  ? Colors.white.withOpacity(0.05)
-                                  : Colors.black.withOpacity(0.03),
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: TextField(
-                          controller: _searchController,
-                          style: TextStyle(
+                      // Modern Search bar with pill-shaped shadow
+                      PhysicalModel(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(24),
+                        elevation: 6,
+                        shadowColor:
+                            isDarkMode
+                                ? AppTheme.primaryColor.withOpacity(0.3)
+                                : Colors.black.withOpacity(0.15),
+                        child: Container(
+                          height: 40,
+                          decoration: BoxDecoration(
                             color:
                                 isDarkMode
-                                    ? AppTheme.darkPrimaryTextColor
-                                    : AppTheme.lightPrimaryTextColor,
-                            fontSize: 14,
+                                    ? Colors.white.withOpacity(0.05)
+                                    : Colors.black.withOpacity(0.03),
+                            borderRadius: BorderRadius.circular(24),
                           ),
-                          decoration: InputDecoration(
-                            hintText: context.tr('search_tasks'),
-                            hintStyle: TextStyle(
+                          child: TextField(
+                            controller: _searchController,
+                            style: TextStyle(
                               color:
                                   isDarkMode
-                                      ? AppTheme.darkDisabledTextColor
-                                      : AppTheme.lightDisabledTextColor,
+                                      ? AppTheme.darkPrimaryTextColor
+                                      : AppTheme.lightPrimaryTextColor,
                               fontSize: 14,
                             ),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 12.0,
+                            decoration: InputDecoration(
+                              hintText: context.tr('search_tasks'),
+                              hintStyle: TextStyle(
+                                color:
+                                    isDarkMode
+                                        ? AppTheme.darkDisabledTextColor
+                                        : AppTheme.lightDisabledTextColor,
+                                fontSize: 14,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 8.0,
+                              ),
+                              isDense: true,
+                              prefixIcon: Icon(
+                                Icons.search,
+                                color:
+                                    isDarkMode
+                                        ? AppTheme.darkSecondaryTextColor
+                                        : AppTheme.lightSecondaryTextColor,
+                                size: 20,
+                              ),
+                              prefixIconConstraints: const BoxConstraints(
+                                minWidth: 40,
+                                minHeight: 40,
+                              ),
                             ),
-                            isDense: true,
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color:
-                                  isDarkMode
-                                      ? AppTheme.darkSecondaryTextColor
-                                      : AppTheme.lightSecondaryTextColor,
-                              size: 20,
-                            ),
-                            prefixIconConstraints: const BoxConstraints(
-                              minWidth: 40,
-                              minHeight: 40,
-                            ),
+                            onChanged: (value) {
+                              setState(() {
+                                _searchQuery = value;
+                                _updateFilteredTasks();
+                              });
+                            },
                           ),
-                          onChanged: (value) {
-                            setState(() {
-                              _searchQuery = value;
-                              _updateFilteredTasks();
-                            });
-                          },
                         ),
                       ),
 
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
 
                       // Expanded to make the rest of the content scrollable
                       Expanded(
@@ -533,7 +542,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     },
                                   ),
                                 ),
-                                const SizedBox(height: 24),
+                                const SizedBox(height: 16),
                               ],
 
                               // Filter tabs
@@ -755,7 +764,7 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: Container(
         margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
           color:
               isSelected
