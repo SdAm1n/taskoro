@@ -32,6 +32,7 @@ class AppTheme {
   ); // Yellow for medium priority
   static const Color accentGreen = Color(0xFF66CC41); // Green for low priority
   static const Color accentBlue = Color(0xFF5EB0EF); // Blue accent
+  static const Color inactiveNavColor = Color(0xFFABCEF5); // Inactive nav items
 
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(

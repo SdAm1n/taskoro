@@ -9,6 +9,7 @@ import '../theme/app_theme.dart';
 import '../utils/task_deletion_state.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/task_card.dart';
+import '../localization/translation_helper.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -52,7 +53,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           isDarkMode
               ? AppTheme.darkBackgroundColor
               : AppTheme.lightBackgroundColor,
-      appBar: CustomAppBar(title: 'Calendar'),
+      appBar: CustomAppBar(title: context.tr('calendar')),
       body: Column(
         children: [
           Container(
@@ -185,7 +186,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 Text(
                   _selectedDay != null
                       ? DateFormat('MMMM dd, yyyy').format(_selectedDay!)
-                      : 'No date selected',
+                      : context.tr('no_date_selected'),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -196,7 +197,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ),
                 ),
                 Text(
-                  '${_selectedDayTasks.length} Tasks',
+                  '${_selectedDayTasks.length} ${context.tr('tasks')}',
                   style: TextStyle(
                     fontSize: 14,
                     color:
@@ -226,7 +227,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'No tasks for this day',
+                            context.tr('no_tasks_for_this_day'),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

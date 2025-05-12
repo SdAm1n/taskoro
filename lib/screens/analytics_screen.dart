@@ -5,6 +5,7 @@ import '../services/theme_provider.dart';
 import '../models/task.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_app_bar.dart';
+import '../localization/translation_helper.dart';
 
 class AnalyticsScreen extends StatelessWidget {
   const AnalyticsScreen({super.key});
@@ -35,7 +36,7 @@ class AnalyticsScreen extends StatelessWidget {
           isDarkMode
               ? AppTheme.darkBackgroundColor
               : AppTheme.lightBackgroundColor,
-      appBar: CustomAppBar(title: 'Analytics'),
+      appBar: CustomAppBar(title: context.tr('analytics')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -58,7 +59,7 @@ class AnalyticsScreen extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    'Task Summary',
+                    context.tr('task_summary'),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -73,19 +74,19 @@ class AnalyticsScreen extends StatelessWidget {
                         context,
                         icon: Icons.assignment_outlined,
                         value: allTasks.length.toString(),
-                        label: 'Total',
+                        label: context.tr('total'),
                       ),
                       _buildSummaryItem(
                         context,
                         icon: Icons.check_circle_outline,
                         value: completedTasks.length.toString(),
-                        label: 'Completed',
+                        label: context.tr('completed'),
                       ),
                       _buildSummaryItem(
                         context,
                         icon: Icons.pending_actions_outlined,
                         value: pendingTasks.length.toString(),
-                        label: 'Pending',
+                        label: context.tr('pending'),
                       ),
                     ],
                   ),
@@ -102,7 +103,7 @@ class AnalyticsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${(completionRate * 100).toStringAsFixed(0)}% completed',
+                    '${(completionRate * 100).toStringAsFixed(0)}% ${context.tr('completed')}',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 14,
@@ -117,7 +118,7 @@ class AnalyticsScreen extends StatelessWidget {
 
             // Tasks by Category
             Text(
-              'Tasks by Category',
+              context.tr('tasks_by_category'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -162,7 +163,7 @@ class AnalyticsScreen extends StatelessWidget {
 
             // Tasks by Priority
             Text(
-              'Tasks by Priority',
+              context.tr('tasks_by_priority'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -193,7 +194,7 @@ class AnalyticsScreen extends StatelessWidget {
                 children: [
                   _buildPrioritySection(
                     context,
-                    priority: 'High',
+                    priority: context.tr('high'),
                     count: priorityTaskCounts[TaskPriority.high] ?? 0,
                     color: AppTheme.accentRed,
                     isDarkMode: isDarkMode,
@@ -201,7 +202,7 @@ class AnalyticsScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   _buildPrioritySection(
                     context,
-                    priority: 'Medium',
+                    priority: context.tr('medium'),
                     count: priorityTaskCounts[TaskPriority.medium] ?? 0,
                     color: AppTheme.accentYellow,
                     isDarkMode: isDarkMode,
@@ -209,7 +210,7 @@ class AnalyticsScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   _buildPrioritySection(
                     context,
-                    priority: 'Low',
+                    priority: context.tr('low'),
                     count: priorityTaskCounts[TaskPriority.low] ?? 0,
                     color: AppTheme.accentGreen,
                     isDarkMode: isDarkMode,
@@ -242,7 +243,7 @@ class AnalyticsScreen extends StatelessWidget {
                       Icon(Icons.lightbulb_outline, color: AppTheme.accentBlue),
                       const SizedBox(width: 8),
                       Text(
-                        'Productivity Tip',
+                        context.tr('productivity_tip'),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -253,7 +254,7 @@ class AnalyticsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Try focusing on high-priority tasks first thing in the morning when your energy levels are highest.',
+                    context.tr('productivity_tip_text'),
                     style: TextStyle(
                       fontSize: 14,
                       height: 1.5,
@@ -307,8 +308,8 @@ class AnalyticsScreen extends StatelessWidget {
   }) {
     final progress = total > 0 ? count / total : 0.0;
     final categoryName = category.toString().split('.').last;
-    final categoryTitle =
-        categoryName[0].toUpperCase() + categoryName.substring(1);
+    // Use localized category name instead of just capitalizing
+    final categoryTitle = context.tr(categoryName);
 
     Color categoryColor;
     switch (category) {
@@ -352,7 +353,7 @@ class AnalyticsScreen extends StatelessWidget {
                 ),
               ),
               Text(
-                '$count tasks',
+                '$count ${context.tr('tasks')}',
                 style: TextStyle(
                   fontSize: 14,
                   color:

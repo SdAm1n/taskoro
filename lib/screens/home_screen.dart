@@ -6,6 +6,7 @@ import '../services/task_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/task_card.dart';
 import '../utils/task_deletion_state.dart';
+import '../localization/translation_helper.dart';
 import 'notifications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -82,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Hello,',
+                        context.tr('hello'),
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
                       const SizedBox(height: 4),
@@ -188,7 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             : AppTheme.lightPrimaryTextColor,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Search tasks...',
+                    hintText: context.tr('search_tasks'),
                     hintStyle: TextStyle(
                       color:
                           Theme.of(context).brightness == Brightness.dark
@@ -221,10 +222,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
-                    _buildFilterChip('All', 0),
-                    _buildFilterChip('Today', 1),
-                    _buildFilterChip('Upcoming', 2),
-                    _buildFilterChip('Completed', 3),
+                    _buildFilterChip(context.tr('all'), 0),
+                    _buildFilterChip(context.tr('today'), 1),
+                    _buildFilterChip(context.tr('upcoming'), 2),
+                    _buildFilterChip(context.tr('completed'), 3),
                   ],
                 ),
               ),
@@ -236,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '${_filteredTasks.length} Tasks',
+                    '${_filteredTasks.length} ${context.tr('tasks')}',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   Text(
@@ -297,7 +298,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           ).showSnackBar(
                                             SnackBar(
                                               content: Text(
-                                                'Task "$taskTitle" deleted',
+                                                '${context.tr('task_deleted')}: "$taskTitle"',
                                               ),
                                               duration: const Duration(
                                                 seconds: 3,
@@ -316,11 +317,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                           ScaffoldMessenger.of(
                                             context,
                                           ).showSnackBar(
-                                            const SnackBar(
+                                            SnackBar(
                                               content: Text(
-                                                'Could not delete task',
+                                                context.tr(
+                                                  'task_deleted_error',
+                                                ),
                                               ),
-                                              duration: Duration(seconds: 3),
+                                              duration: const Duration(
+                                                seconds: 3,
+                                              ),
                                             ),
                                           );
                                         }
@@ -366,7 +371,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No tasks found',
+            context.tr('no_tasks_found'),
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               color:
                   isDarkMode
@@ -377,10 +382,10 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 8),
           Text(
             _selectedIndex == 3
-                ? 'You haven\'t completed any tasks yet'
+                ? context.tr('no_completed_tasks')
                 : _searchQuery.isNotEmpty
-                ? 'No tasks match your search'
-                : 'Tap + to add a new task',
+                ? context.tr('no_search_results')
+                : context.tr('add_task_hint'),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color:

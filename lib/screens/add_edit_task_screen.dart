@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
+import '../localization/translation_helper.dart';
 
 class AddEditTaskScreen extends StatefulWidget {
   final Task? task; // If null, we're adding a new task; otherwise, editing
@@ -187,7 +188,9 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           isDarkMode
               ? AppTheme.darkBackgroundColor
               : AppTheme.lightBackgroundColor,
-      appBar: CustomAppBar(title: isEditing ? 'Edit Task' : 'Add New Task'),
+      appBar: CustomAppBar(
+        title: isEditing ? context.tr('edit_task') : context.tr('add_new_task'),
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -197,14 +200,17 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Title field
-                Text('Title', style: Theme.of(context).textTheme.bodyLarge),
+                Text(
+                  context.tr('title'),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
                 const SizedBox(height: 8),
                 CustomTextField(
                   controller: _titleController,
-                  hintText: 'Task title',
+                  hintText: context.tr('task_title'),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a title';
+                      return context.tr('please_enter_title');
                     }
                     return null;
                   },
@@ -214,13 +220,13 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
 
                 // Description field
                 Text(
-                  'Description',
+                  context.tr('description'),
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
                 const SizedBox(height: 8),
                 CustomTextField(
                   controller: _descriptionController,
-                  hintText: 'Task description',
+                  hintText: context.tr('task_description'),
                   maxLines: 4,
                 ),
 
@@ -228,7 +234,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
 
                 // Date pickers
                 Text(
-                  'Task Date Range',
+                  context.tr('task_date_range'),
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
                 const SizedBox(height: 8),
@@ -241,7 +247,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Start Date',
+                            context.tr('start_date'),
                             style: Theme.of(
                               context,
                             ).textTheme.bodyMedium?.copyWith(
@@ -299,7 +305,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'End Date',
+                            context.tr('end_date'),
                             style: Theme.of(
                               context,
                             ).textTheme.bodyMedium?.copyWith(
@@ -356,25 +362,28 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                 const SizedBox(height: 24),
 
                 // Priority selector
-                Text('Priority', style: Theme.of(context).textTheme.bodyLarge),
+                Text(
+                  context.tr('priority'),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
                     _buildPriorityOption(
                       TaskPriority.low,
-                      'Low',
+                      context.tr('low'),
                       AppTheme.accentGreen,
                     ),
                     const SizedBox(width: 12),
                     _buildPriorityOption(
                       TaskPriority.medium,
-                      'Medium',
+                      context.tr('medium'),
                       AppTheme.accentYellow,
                     ),
                     const SizedBox(width: 12),
                     _buildPriorityOption(
                       TaskPriority.high,
-                      'High',
+                      context.tr('high'),
                       AppTheme.accentRed,
                     ),
                   ],
@@ -383,7 +392,10 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                 const SizedBox(height: 24),
 
                 // Category selector
-                Text('Category', style: Theme.of(context).textTheme.bodyLarge),
+                Text(
+                  context.tr('category'),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
                 const SizedBox(height: 8),
                 Container(
                   width: double.infinity,
@@ -439,7 +451,10 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
 
                 // Save button
                 CustomButton(
-                  text: isEditing ? 'Update Task' : 'Add Task',
+                  text:
+                      isEditing
+                          ? context.tr('update_task')
+                          : context.tr('add_task'),
                   onPressed: _saveTask,
                   icon: isEditing ? Icons.save : Icons.add_circle,
                 ),
@@ -454,17 +469,17 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   String _getCategoryString(TaskCategory category) {
     switch (category) {
       case TaskCategory.personal:
-        return 'Personal';
+        return context.tr('personal');
       case TaskCategory.work:
-        return 'Work';
+        return context.tr('work');
       case TaskCategory.shopping:
-        return 'Shopping';
+        return context.tr('shopping');
       case TaskCategory.health:
-        return 'Health';
+        return context.tr('health');
       case TaskCategory.study:
-        return 'Study';
+        return context.tr('study');
       case TaskCategory.other:
-        return 'Other';
+        return context.tr('other');
     }
   }
 

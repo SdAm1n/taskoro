@@ -7,6 +7,7 @@ import 'settings_screen.dart';
 import '../services/theme_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/no_back_widget.dart';
+import '../localization/translation_helper.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -32,45 +33,133 @@ class _MainScreenState extends State<MainScreen> {
     return NoBackWidget(
       child: Scaffold(
         body: _screens[_currentIndex],
-        bottomNavigationBar: BottomNavigationBar(
-          backgroundColor:
-              isDarkMode
-                  ? AppTheme.darkSurfaceColor
-                  : AppTheme.lightSurfaceColor,
-          selectedItemColor: AppTheme.primaryColor,
-          unselectedItemColor:
-              isDarkMode
-                  ? AppTheme.darkSecondaryTextColor
-                  : AppTheme.lightSecondaryTextColor,
-          type: BottomNavigationBarType.fixed,
-          currentIndex: _currentIndex,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home',
+        bottomNavigationBar: Container(
+          height: 70,
+          decoration: BoxDecoration(
+            color:
+                isDarkMode
+                    ? AppTheme.darkSurfaceColor
+                    : AppTheme.lightSurfaceColor,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_today_outlined),
-              activeIcon: Icon(Icons.calendar_today),
-              label: 'Calendar',
+          ),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.bar_chart_outlined),
-              activeIcon: Icon(Icons.bar_chart),
-              label: 'Analytics',
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(
+                  icon: Icons.home_outlined,
+                  activeIcon: Icons.home,
+                  label: context.tr('home'),
+                  index: 0,
+                  isDarkMode: isDarkMode,
+                ),
+                _buildNavItem(
+                  icon: Icons.calendar_today_outlined,
+                  activeIcon: Icons.calendar_today,
+                  label: context.tr('calendar'),
+                  index: 1,
+                  isDarkMode: isDarkMode,
+                ),
+                _buildNavItem(
+                  icon: Icons.bar_chart_outlined,
+                  activeIcon: Icons.bar_chart,
+                  label: context.tr('analytics'),
+                  index: 2,
+                  isDarkMode: isDarkMode,
+                ),
+                _buildNavItem(
+                  icon: Icons.settings_outlined,
+                  activeIcon: Icons.settings,
+                  label: context.tr('settings'),
+                  index: 3,
+                  isDarkMode: isDarkMode,
+                ),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings_outlined),
-              activeIcon: Icon(Icons.settings),
-              label: 'Settings',
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+    required int index,
+    required bool isDarkMode,
+  }) {
+    final isSelected = _currentIndex == index;
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _currentIndex = index;
+        });
+      },
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 70,
+        height: 70,
+        decoration: BoxDecoration(
+          border:
+              isSelected
+                  ? Border(
+                    top: BorderSide(color: AppTheme.primaryColor, width: 3),
+                  )
+                  : null,
+          gradient:
+              isSelected
+                  ? LinearGradient(
+                    colors: [
+                      AppTheme.primaryColor.withOpacity(0.1),
+                      Colors.transparent,
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  )
+                  : null,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isSelected ? activeIcon : icon,
+              color:
+                  isSelected
+                      ? const Color(0xFF6369D9) // Active color
+                      : const Color(0xFFABCEF5), // Inactive color
+              size: isSelected ? 26 : 22,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color:
+                    isSelected
+                        ? const Color(0xFF6369D9) // Active color
+                        : const Color(0xFFABCEF5), // Inactive color
+                fontSize: isSelected ? 12 : 11,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
             ),
           ],
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
         ),
       ),
     );

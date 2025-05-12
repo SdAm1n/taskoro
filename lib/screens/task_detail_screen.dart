@@ -10,6 +10,7 @@ import '../widgets/task_priority_badge.dart';
 import '../utils/custom_page_route.dart';
 import '../utils/task_deletion_state.dart';
 import '../utils/task_detail_navigation.dart';
+import '../localization/translation_helper.dart';
 import 'add_edit_task_screen.dart';
 
 class TaskDetailScreen extends StatelessWidget {
@@ -34,11 +35,9 @@ class TaskDetailScreen extends StatelessWidget {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         // Only show the "task not found" message if we aren't in a deletion flow
         if (!TaskDeletionState.isBeingDeleted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Task not found or was already deleted'),
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(context.tr('task_not_found'))));
         }
 
         // Use our task-specific navigation helper to go back safely
@@ -56,7 +55,7 @@ class TaskDetailScreen extends StatelessWidget {
             Theme.of(context).brightness == Brightness.dark
                 ? AppTheme.darkBackgroundColor
                 : AppTheme.lightBackgroundColor,
-        appBar: CustomAppBar(title: 'Task Details'),
+        appBar: CustomAppBar(title: 'task_details'),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -69,7 +68,7 @@ class TaskDetailScreen extends StatelessWidget {
               ? AppTheme.darkBackgroundColor
               : AppTheme.lightBackgroundColor,
       appBar: CustomAppBar(
-        title: 'Task Details',
+        title: 'task_details',
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
@@ -150,7 +149,7 @@ class TaskDetailScreen extends StatelessWidget {
                 children: [
                   _buildInfoCard(
                     context,
-                    'Start Date',
+                    context.tr('start_date'),
                     DateFormat('MMM dd, yyyy').format(task.startDate),
                     Icons.calendar_today,
                     AppTheme.primaryColor,
@@ -158,7 +157,7 @@ class TaskDetailScreen extends StatelessWidget {
                   const SizedBox(width: 16),
                   _buildInfoCard(
                     context,
-                    'End Date',
+                    context.tr('end_date'),
                     DateFormat('MMM dd, yyyy').format(task.endDate),
                     Icons.event_available,
                     _getDueDateColor(task.endDate, context),
@@ -185,12 +184,14 @@ class TaskDetailScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Status',
+                          context.tr('status'),
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          task.isCompleted ? 'Completed' : 'In Progress',
+                          task.isCompleted
+                              ? context.tr('completed_status')
+                              : context.tr('in_progress'),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -381,12 +382,12 @@ class TaskDetailScreen extends StatelessWidget {
                 isDarkMode
                     ? AppTheme.darkSurfaceColor
                     : AppTheme.lightSurfaceColor,
-            title: const Text('Delete Task'),
-            content: Text('Are you sure you want to delete "${task.title}"?'),
+            title: Text(context.tr('delete')),
+            content: Text('${context.tr('confirm_delete')} "${task.title}"?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('Cancel'),
+                child: Text(context.tr('cancel')),
               ),
               TextButton(
                 onPressed: () {
@@ -402,9 +403,9 @@ class TaskDetailScreen extends StatelessWidget {
                     if (result) {
                       // Show success message immediately, before any navigation
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Task deleted successfully'),
-                          duration: Duration(seconds: 2),
+                        SnackBar(
+                          content: Text(context.tr('task_deleted')),
+                          duration: const Duration(seconds: 2),
                         ),
                       );
 
@@ -420,10 +421,8 @@ class TaskDetailScreen extends StatelessWidget {
                       Future.delayed(const Duration(milliseconds: 100), () {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Could not delete task. Please try again.',
-                              ),
+                            SnackBar(
+                              content: Text(context.tr('task_deleted_error')),
                             ),
                           );
 
@@ -449,9 +448,9 @@ class TaskDetailScreen extends StatelessWidget {
                     }
                   }
                 },
-                child: const Text(
-                  'Delete',
-                  style: TextStyle(color: AppTheme.accentRed),
+                child: Text(
+                  context.tr('delete'),
+                  style: const TextStyle(color: AppTheme.accentRed),
                 ),
               ),
             ],

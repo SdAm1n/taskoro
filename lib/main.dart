@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/main_screen.dart';
@@ -8,9 +9,11 @@ import 'screens/splash_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'services/task_provider.dart';
 import 'services/theme_provider.dart';
+import 'services/language_provider.dart';
 import 'theme/app_theme.dart';
 import 'utils/custom_page_route.dart';
 import 'package:flutter/services.dart';
+import 'localization/app_localizations.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,9 +36,12 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (context) => TaskProvider()),
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
+        ChangeNotifierProvider(
+          create: (context) => LanguageProvider()..initLanguage(),
+        ),
       ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, _) {
+      child: Consumer2<ThemeProvider, LanguageProvider>(
+        builder: (context, themeProvider, languageProvider, _) {
           // Set system UI overlay style based on theme
           SystemChrome.setSystemUIOverlayStyle(
             SystemUiOverlayStyle(
@@ -62,6 +68,20 @@ class MyApp extends StatelessWidget {
             builder: (context, child) {
               return child!; // Return without any modifications
             },
+
+            // Localization setup
+            locale: Locale(languageProvider.currentLanguage),
+            supportedLocales: const [
+              Locale('en', ''), // English
+              Locale('bn', ''), // Bangla
+            ],
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+
             initialRoute: '/splash',
             routes: {
               '/splash': (context) => const SplashScreen(),
