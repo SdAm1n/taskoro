@@ -101,14 +101,42 @@ class TaskDetailScreen extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      task.title,
-                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        decoration:
-                            task.isCompleted
-                                ? TextDecoration.lineThrough
-                                : null,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          task.title,
+                          style: Theme.of(
+                            context,
+                          ).textTheme.displaySmall?.copyWith(
+                            decoration:
+                                task.isCompleted
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // Show category as a subtitle under task title
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.category,
+                              size: 16,
+                              color: AppTheme.primaryColor,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              task.getCategoryString(),
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.copyWith(
+                                color: AppTheme.primaryColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                   TaskPriorityBadge(priority: task.getPriorityString()),
@@ -117,7 +145,7 @@ class TaskDetailScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // Due date and category
+              // Start date and end date
               Row(
                 children: [
                   _buildInfoCard(
@@ -136,18 +164,6 @@ class TaskDetailScreen extends StatelessWidget {
                     _getDueDateColor(task.endDate, context),
                   ),
                 ],
-              ),
-
-              const SizedBox(height: 24),
-
-              // Category
-              _buildInfoCard(
-                context,
-                'Category',
-                task.getCategoryString(),
-                Icons.category,
-                AppTheme.primaryColor,
-                fullWidth: true,
               ),
 
               const SizedBox(height: 24),

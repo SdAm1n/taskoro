@@ -9,7 +9,6 @@ import 'app_version_screen.dart';
 import 'rate_app_screen.dart';
 import 'help_support_screen.dart';
 import 'privacy_policy_screen.dart';
-import '../utils/safe_navigation.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
