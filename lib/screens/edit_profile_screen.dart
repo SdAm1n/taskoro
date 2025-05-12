@@ -17,6 +17,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
+  // Password controllers
+  final TextEditingController _currentPasswordController =
+      TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -31,6 +37,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -59,6 +68,117 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
       );
     }
+  }
+
+  void _showChangePasswordDialog() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final passwordFormKey = GlobalKey<FormState>();
+
+    // Reset password controllers
+    _currentPasswordController.clear();
+    _newPasswordController.clear();
+    _confirmPasswordController.clear();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor:
+              isDarkMode
+                  ? AppTheme.darkSurfaceColor
+                  : AppTheme.lightSurfaceColor,
+          title: const Text('Change Password'),
+          content: Form(
+            key: passwordFormKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CustomTextField(
+                    controller: _currentPasswordController,
+                    hintText: 'Current Password',
+                    prefixIcon: Icons.lock_outline,
+                    obscureText: true,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your current password';
+                      }
+                      // In a real app, you would verify the current password
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  CustomTextField(
+                    controller: _newPasswordController,
+                    hintText: 'New Password',
+                    prefixIcon: Icons.lock_outline,
+                    obscureText: true,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a new password';
+                      }
+                      if (value.length < 6) {
+                        return 'Password must be at least 6 characters';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  CustomTextField(
+                    controller: _confirmPasswordController,
+                    hintText: 'Confirm New Password',
+                    prefixIcon: Icons.lock_outline,
+                    obscureText: true,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please confirm your new password';
+                      }
+                      if (value != _newPasswordController.text) {
+                        return 'Passwords do not match';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white70 : Colors.black54,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                if (passwordFormKey.currentState!.validate()) {
+                  // In a real app, you would update the password in your auth system
+                  // For this demo app, we'll just show a success message
+                  Navigator.of(dialogContext).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Password changed successfully'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+              child: Text(
+                'Change',
+                style: TextStyle(
+                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -175,6 +295,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 text: 'Save Changes',
                 onPressed: _saveProfile,
                 isFullWidth: true,
+              ),
+
+              const SizedBox(height: 24),
+
+              // Change Password button
+              CustomButton(
+                text: 'Change Password',
+                onPressed: _showChangePasswordDialog,
+                isOutlined: true,
+                isFullWidth: true,
+                backgroundColor:
+                    isDarkMode ? AppTheme.darkSurfaceColor : Colors.white,
+                textColor: AppTheme.primaryColor,
+                icon: Icons.lock_outline,
               ),
             ],
           ),

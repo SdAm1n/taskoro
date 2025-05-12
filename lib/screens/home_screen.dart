@@ -6,7 +6,7 @@ import '../services/task_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/task_card.dart';
 import '../utils/task_deletion_state.dart';
-import 'edit_profile_screen.dart';
+import 'notifications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -74,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with greeting and profile
+              // Header with greeting and notification icon
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -94,47 +94,52 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      // Navigate to profile edit screen
+                      // Navigate to notifications screen
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const EditProfileScreen(),
+                          builder: (context) => const NotificationsScreen(),
                         ),
                       );
                     },
                     child: Stack(
                       children: [
-                        CircleAvatar(
-                          radius: 24,
-                          backgroundColor: AppTheme.primaryColor,
-                          backgroundImage:
-                              user.photoUrl != null
-                                  ? NetworkImage(user.photoUrl!)
-                                  : null,
-                          child:
-                              user.photoUrl == null
-                                  ? Text(
-                                    user.displayName.isNotEmpty
-                                        ? user.displayName
-                                            .substring(0, 1)
-                                            .toUpperCase()
-                                        : '?',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                    ),
-                                  )
-                                  : null,
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color:
+                                isDarkMode
+                                    ? AppTheme.darkSurfaceColor
+                                    : AppTheme.lightSurfaceColor,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primaryColor.withOpacity(0.2),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                            border: Border.all(
+                              color: AppTheme.primaryColor.withOpacity(0.3),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.notifications,
+                            size: 22,
+                            color: AppTheme.primaryColor,
+                          ),
                         ),
+                        // Notification badge
                         Positioned(
-                          bottom: 0,
+                          top: 0,
                           right: 0,
                           child: Container(
-                            width: 12,
-                            height: 12,
+                            width: 18,
+                            height: 18,
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryColor.withOpacity(0.8),
+                              color: AppTheme.accentRed,
                               shape: BoxShape.circle,
                               border: Border.all(
                                 color:
@@ -144,10 +149,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                 width: 1.5,
                               ),
                             ),
-                            child: const Icon(
-                              Icons.edit,
-                              color: Colors.white,
-                              size: 8,
+                            child: const Center(
+                              child: Text(
+                                '3',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -256,6 +266,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   arguments: {'taskId': task.id},
                                 );
                               },
+                              onToggleCompleted: () {
+                                taskProvider.toggleTaskCompletion(task.id);
+                                _updateFilteredTasks();
+                              },
                               onDelete: () {
                                 try {
                                   // Mark that we're in a deletion process to prevent "task not found" message
@@ -309,36 +323,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                               duration: Duration(seconds: 3),
                                             ),
                                           );
-
-                                          // Reset deletion state on failure
-                                          TaskDeletionState.reset();
                                         }
                                       }
                                     },
                                   );
                                 } catch (e) {
-                                  // Handle error with user feedback
-                                  debugPrint(
-                                    'Error handling task deletion: $e',
-                                  );
-
-                                  // Reset deletion state on error
-                                  TaskDeletionState.reset();
-
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Error deleting task: $e',
-                                        ),
-                                      ),
-                                    );
-                                  }
+                                  // Print error to console for debugging
+                                  debugPrint('Error deleting task: $e');
                                 }
-                              },
-                              onToggleCompleted: () {
-                                taskProvider.toggleTaskCompletion(task.id);
-                                _updateFilteredTasks();
                               },
                             );
                           },
@@ -358,6 +350,50 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildEmptyState() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.task_alt,
+            size: 80,
+            color:
+                isDarkMode
+                    ? AppTheme.darkDisabledTextColor
+                    : AppTheme.lightDisabledTextColor,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No tasks found',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color:
+                  isDarkMode
+                      ? AppTheme.darkSecondaryTextColor
+                      : AppTheme.lightSecondaryTextColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _selectedIndex == 3
+                ? 'You haven\'t completed any tasks yet'
+                : _searchQuery.isNotEmpty
+                ? 'No tasks match your search'
+                : 'Tap + to add a new task',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color:
+                  isDarkMode
+                      ? AppTheme.darkDisabledTextColor
+                      : AppTheme.lightDisabledTextColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFilterChip(String label, int index) {
     final isSelected = _selectedIndex == index;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -366,14 +402,12 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () {
         setState(() {
           _selectedIndex = index;
-          _searchController.clear();
-          _searchQuery = '';
           _updateFilteredTasks();
         });
       },
       child: Container(
-        margin: const EdgeInsets.only(right: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color:
               isSelected
@@ -383,66 +417,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   : AppTheme.lightSurfaceColor,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              color:
-                  isSelected
-                      ? Colors.white
-                      : isDarkMode
-                      ? AppTheme.darkSecondaryTextColor
-                      : AppTheme.lightSecondaryTextColor,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color:
+                isSelected
+                    ? Colors.white
+                    : isDarkMode
+                    ? AppTheme.darkSecondaryTextColor
+                    : AppTheme.lightSecondaryTextColor,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.check_circle_outline,
-            size: 64,
-            color:
-                isDarkMode
-                    ? AppTheme.darkSecondaryTextColor.withOpacity(0.5)
-                    : AppTheme.lightSecondaryTextColor.withOpacity(0.5),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No tasks found',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color:
-                  isDarkMode
-                      ? AppTheme.darkSecondaryTextColor.withOpacity(0.7)
-                      : AppTheme.lightSecondaryTextColor.withOpacity(0.7),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _selectedIndex == 3
-                ? 'You haven\'t completed any tasks yet'
-                : 'Tap the + button to add a new task',
-            style: TextStyle(
-              fontSize: 14,
-              color:
-                  isDarkMode
-                      ? AppTheme.darkSecondaryTextColor.withOpacity(0.7)
-                      : AppTheme.lightSecondaryTextColor.withOpacity(0.7),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
       ),
     );
   }

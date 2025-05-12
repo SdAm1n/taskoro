@@ -5,6 +5,7 @@ import 'screens/main_screen.dart';
 import 'screens/task_detail_screen.dart';
 import 'screens/add_edit_task_screen.dart';
 import 'screens/splash_screen.dart';
+import 'screens/notifications_screen.dart';
 import 'services/task_provider.dart';
 import 'services/theme_provider.dart';
 import 'theme/app_theme.dart';
@@ -67,6 +68,7 @@ class MyApp extends StatelessWidget {
               '/': (context) => const WelcomeScreen(),
               '/home': (context) => const MainScreen(),
               '/add_task': (context) => const AddEditTaskScreen(),
+              '/notifications': (context) => const NotificationsScreen(),
             },
             onGenerateRoute: (settings) {
               // Special case for task detail
