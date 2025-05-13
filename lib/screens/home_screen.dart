@@ -110,19 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
           color: cardColor,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: cardColor.withOpacity(0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 1,
-              offset: const Offset(0, 1),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(24),
         ),
         child: Stack(
           children: [
@@ -293,9 +281,8 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
-  }
+  } // Helper method to get category name
 
-  // Helper method to get category name
   String _getCategoryName(TaskCategory category) {
     switch (category) {
       case TaskCategory.work:
@@ -444,14 +431,28 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 14),
 
                       // Modern Search bar with pill-shaped shadow
-                      PhysicalModel(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(24),
-                        elevation: 6,
-                        shadowColor:
-                            isDarkMode
-                                ? AppTheme.primaryColor.withOpacity(0.3)
-                                : Colors.black.withOpacity(0.15),
+                      Container(
+                        decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  isDarkMode
+                                      ? AppTheme.primaryColor.withOpacity(0.2)
+                                      : Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, -2), // Shadow at top
+                            ),
+                            BoxShadow(
+                              color:
+                                  isDarkMode
+                                      ? AppTheme.primaryColor.withOpacity(0.3)
+                                      : Colors.black.withOpacity(0.15),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4), // Shadow at bottom
+                            ),
+                          ],
+                          borderRadius: BorderRadius.circular(32),
+                        ),
                         child: Container(
                           height: 40,
                           decoration: BoxDecoration(
@@ -459,7 +460,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 isDarkMode
                                     ? Colors.white.withOpacity(0.05)
                                     : Colors.black.withOpacity(0.03),
-                            borderRadius: BorderRadius.circular(24),
+                            borderRadius: BorderRadius.circular(32),
                           ),
                           child: TextField(
                             controller: _searchController,
@@ -506,7 +507,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 16),
 
                       // Expanded to make the rest of the content scrollable
@@ -548,17 +548,22 @@ class _HomeScreenState extends State<HomeScreen> {
                               // Filter tabs
                               SizedBox(
                                 height: 40,
-                                child: ListView(
-                                  scrollDirection: Axis.horizontal,
-                                  children: [
-                                    _buildFilterChip(context.tr('all'), 0),
-                                    _buildFilterChip(context.tr('today'), 1),
-                                    _buildFilterChip(context.tr('upcoming'), 2),
-                                    _buildFilterChip(
-                                      context.tr('completed'),
-                                      3,
-                                    ),
-                                  ],
+                                child: Center(
+                                  child: ListView(
+                                    scrollDirection: Axis.horizontal,
+                                    children: [
+                                      _buildFilterChip(context.tr('all'), 0),
+                                      _buildFilterChip(context.tr('today'), 1),
+                                      _buildFilterChip(
+                                        context.tr('upcoming'),
+                                        2,
+                                      ),
+                                      _buildFilterChip(
+                                        context.tr('completed'),
+                                        3,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
 
@@ -774,16 +779,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   : AppTheme.lightSurfaceColor,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color:
-                isSelected
-                    ? Colors.white
-                    : isDarkMode
-                    ? AppTheme.darkSecondaryTextColor
-                    : AppTheme.lightSecondaryTextColor,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        child: Center(
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color:
+                  isSelected
+                      ? Colors.white
+                      : isDarkMode
+                      ? AppTheme.darkSecondaryTextColor
+                      : AppTheme.lightSecondaryTextColor,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
           ),
         ),
       ),
