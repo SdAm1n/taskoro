@@ -123,7 +123,7 @@ lib/generated_plugin_registrant.dart
 **/ios/Flutter/Generated.xcconfig
 **/ios/Flutter/app.flx
 **/ios/Flutter/app.zip
-**/ios/Flutter/flutter_assets/
+**/ios/Flutter/flutter_# Removing the 'asset' entry to prevent confusion with 'assets' folders/
 **/ios/Flutter/flutter_export_environment.sh
 **/ios/ServiceDefinitions.json
 **/ios/Runner/GeneratedPluginRegistrant.*
