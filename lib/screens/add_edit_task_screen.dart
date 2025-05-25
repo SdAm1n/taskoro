@@ -397,54 +397,56 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
                 const SizedBox(height: 8),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        isDarkMode
-                            ? AppTheme.darkSurfaceColor
-                            : AppTheme.lightSurfaceColor,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: DropdownButton<TaskCategory>(
-                    value: _selectedCategory,
-                    isExpanded: true,
-                    underline: Container(),
-                    dropdownColor:
-                        isDarkMode
-                            ? AppTheme.darkSurfaceColor
-                            : AppTheme.lightSurfaceColor,
-                    icon: Icon(
-                      Icons.arrow_drop_down,
-                      color:
-                          isDarkMode
-                              ? AppTheme.darkSecondaryTextColor
-                              : AppTheme.lightSecondaryTextColor,
+                // First row of categories
+                Row(
+                  children: [
+                    _buildCategoryOption(
+                      TaskCategory.personal,
+                      context.tr('personal'),
+                      const Color(0xFF1E88E5), // Blue for personal
+                      Icons.person_outline,
                     ),
-                    onChanged: (TaskCategory? newValue) {
-                      if (newValue != null) {
-                        setState(() {
-                          _selectedCategory = newValue;
-                        });
-                      }
-                    },
-                    items:
-                        TaskCategory.values.map<DropdownMenuItem<TaskCategory>>(
-                          (category) {
-                            return DropdownMenuItem<TaskCategory>(
-                              value: category,
-                              child: Text(
-                                _getCategoryString(category),
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
-                            );
-                          },
-                        ).toList(),
-                  ),
+                    const SizedBox(width: 8),
+                    _buildCategoryOption(
+                      TaskCategory.work,
+                      context.tr('work'),
+                      const Color(0xFF5E35B1), // Deep purple for work
+                      Icons.work_outline,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildCategoryOption(
+                      TaskCategory.shopping,
+                      context.tr('shopping'),
+                      const Color(0xFF00ACC1), // Teal for shopping
+                      Icons.shopping_cart_outlined,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // Second row of categories
+                Row(
+                  children: [
+                    _buildCategoryOption(
+                      TaskCategory.health,
+                      context.tr('health'),
+                      const Color(0xFF43A047), // Green for health
+                      Icons.favorite_border,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildCategoryOption(
+                      TaskCategory.study,
+                      context.tr('study'),
+                      const Color(0xFF8E24AA), // Purple for study
+                      Icons.school_outlined,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildCategoryOption(
+                      TaskCategory.other,
+                      context.tr('other'),
+                      const Color(0xFFE53935), // Red for other
+                      Icons.lightbulb_outline,
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: 40),
@@ -464,23 +466,6 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
         ),
       ),
     );
-  }
-
-  String _getCategoryString(TaskCategory category) {
-    switch (category) {
-      case TaskCategory.personal:
-        return context.tr('personal');
-      case TaskCategory.work:
-        return context.tr('work');
-      case TaskCategory.shopping:
-        return context.tr('shopping');
-      case TaskCategory.health:
-        return context.tr('health');
-      case TaskCategory.study:
-        return context.tr('study');
-      case TaskCategory.other:
-        return context.tr('other');
-    }
   }
 
   Widget _buildPriorityOption(
@@ -527,6 +512,74 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                         : AppTheme.lightSecondaryTextColor,
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryOption(
+    TaskCategory category,
+    String label,
+    Color color,
+    IconData icon,
+  ) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isSelected = _selectedCategory == category;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedCategory = category;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          decoration: BoxDecoration(
+            color:
+                isSelected
+                    ? color.withOpacity(0.2)
+                    : isDarkMode
+                    ? AppTheme.darkSurfaceColor
+                    : AppTheme.lightSurfaceColor,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isSelected ? color : Colors.transparent,
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color:
+                    isSelected
+                        ? color
+                        : isDarkMode
+                        ? AppTheme.darkSecondaryTextColor
+                        : AppTheme.lightSecondaryTextColor,
+                size: 20,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color:
+                      isSelected
+                          ? color
+                          : isDarkMode
+                          ? AppTheme.darkSecondaryTextColor
+                          : AppTheme.lightSecondaryTextColor,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
         ),
       ),
