@@ -142,3 +142,14 @@ lib/generated_plugin_registrant.dart
 # End of https://mrkandreev.name/snippets/gitignore-generator/#Dart,Flutter,Firebase
 
 .github
+google-services.json
+firebase-messaging-sw.js
+# Firebase related
+**/firebase/**/google-services.json
+**/firebase/**/google-services.json.*
+**/firebase/**/google-services.json.*.backup
+**/firebase/**/google-services.json.*.backup.*
+**/firebase/**/google-services.json.*.backup.*.backup
+**/firebase/**/google-services.json.*.backup.*.backup.*
+**/firebase/**/google-services.json.*.backup.*.backup.*.backup
+**/firebase/**/google-services.json.*.backup.*.backup.*.backup.*
