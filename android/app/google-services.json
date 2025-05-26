@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "347724971870",
+    "project_id": "taskoro-app",
+    "storage_bucket": "taskoro-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:347724971870:android:0a59c5db468cc6c4a399cf",
+        "android_client_info": {
+          "package_name": "com.taskoro.taskoro"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "347724971870-09c7emi8lh20oti1ul11begakvrso8i3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.taskoro.taskoro",
+            "certificate_hash": "5b5390df35637ca5299cbe58efa63046224106dc"
+          }
+        },
+        {
+          "client_id": "347724971870-56tnahc60rv7fv1seekujq47ftgiur1i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCHEZymBWlF2lTuAETWe5qZLVzJvt2K-ds"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "347724971870-56tnahc60rv7fv1seekujq47ftgiur1i.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

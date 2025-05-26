@@ -1,23 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
-import 'screens/welcome_screen.dart';
-import 'screens/main_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'screens/task_detail_screen.dart';
 import 'screens/add_edit_task_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/notifications_screen.dart';
+import 'screens/auth_wrapper.dart';
 import 'services/task_provider.dart';
 import 'services/theme_provider.dart';
 import 'services/language_provider.dart';
 import 'services/team_provider.dart';
+import 'services/auth_service.dart';
 import 'theme/app_theme.dart';
 import 'utils/custom_page_route.dart';
 import 'package:flutter/services.dart';
 import 'localization/app_localizations.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  await Firebase.initializeApp();
 
   // Set preferred orientations
   SystemChrome.setPreferredOrientations([
@@ -35,6 +39,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (context) => AuthService()),
         ChangeNotifierProvider(create: (context) => TaskProvider()),
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
         ChangeNotifierProvider(
@@ -87,8 +92,8 @@ class MyApp extends StatelessWidget {
             initialRoute: '/splash',
             routes: {
               '/splash': (context) => const SplashScreen(),
-              '/': (context) => const WelcomeScreen(),
-              '/home': (context) => const MainScreen(),
+              '/': (context) => const AuthWrapper(),
+              '/home': (context) => const AuthWrapper(),
               '/add_task': (context) => const AddEditTaskScreen(),
               '/notifications': (context) => const NotificationsScreen(),
             },

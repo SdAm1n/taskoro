@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../services/theme_provider.dart';
 import '../services/task_provider.dart';
 import '../services/language_provider.dart';
+import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_app_bar.dart';
 import '../localization/translation_helper.dart';
@@ -452,25 +453,53 @@ class SettingsScreen extends StatelessWidget {
                             child: Text(context.tr('cancel')),
                           ),
                           TextButton(
-                            onPressed: () {
+                            onPressed: () async {
                               Navigator.pop(dialogContext); // Close dialog
 
-                              // Navigate to welcome screen (logout functionality)
-                              // Use a more reliable delayed execution approach
-                              Future.delayed(
-                                const Duration(milliseconds: 300),
-                                () {
-                                  if (context.mounted) {
-                                    // Navigate to welcome screen and clear stack
-                                    Navigator.of(
-                                      context,
-                                    ).pushNamedAndRemoveUntil(
-                                      '/',
-                                      (route) => false,
+                              try {
+                                // Sign out using AuthService
+                                await context.read<AuthService>().signOut();
+
+                                // Show success message
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Logged out successfully'),
+                                      backgroundColor: Colors.green,
+                                      duration: Duration(seconds: 1),
+                                    ),
+                                  );
+                                }
+
+                                // The AuthWrapper will automatically handle navigation
+                                // to the login screen when the auth state changes
+                              } catch (e) {
+                                if (context.mounted) {
+                                  // Check if logout was actually successful
+                                  final authService =
+                                      context.read<AuthService>();
+                                  if (authService.currentUser == null) {
+                                    // Logout was successful despite the error
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Logged out successfully',
+                                        ),
+                                        backgroundColor: Colors.green,
+                                        duration: Duration(seconds: 1),
+                                      ),
+                                    );
+                                  } else {
+                                    // Logout actually failed
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Logout failed: $e'),
+                                        backgroundColor: Colors.red,
+                                      ),
                                     );
                                   }
-                                },
-                              );
+                                }
+                              }
                             },
                             child: Text(
                               context.tr('logout'),
