@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../models/task.dart';
+import '../models/team.dart';
 import '../services/task_provider.dart';
+import '../services/team_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_button.dart';
@@ -263,6 +265,12 @@ class TaskDetailScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
+              // Team assignment section
+              if (task.isTeamTask) ...[
+                _buildTeamAssignmentSection(context, task),
+                const SizedBox(height: 24),
+              ],
+
               // Created on
               Text(
                 'Created on',
@@ -467,5 +475,215 @@ class TaskDetailScreen extends StatelessWidget {
     Future.delayed(const Duration(milliseconds: 800), () {
       TaskDeletionState.reset();
     });
+  }
+
+  Widget _buildTeamAssignmentSection(BuildContext context, Task task) {
+    final teamProvider = Provider.of<TeamProvider>(context);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    if (!task.isTeamTask || task.assignedTeamId == null) {
+      return const SizedBox();
+    }
+
+    // Find the team
+    final team = teamProvider.teams.cast<Team?>().firstWhere(
+      (t) => t?.id == task.assignedTeamId,
+      orElse: () => null,
+    );
+
+    if (team == null) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.orange.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.orange.withOpacity(0.3), width: 1),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.warning_outlined, color: Colors.orange, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Team not found',
+                style: TextStyle(fontSize: 14, color: Colors.orange.shade700),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Find the assigned members if any
+    List<TeamMember> assignedMembers = [];
+    if (task.assignedMemberIds != null && task.assignedMemberIds!.isNotEmpty) {
+      assignedMembers =
+          team.members
+              .where(
+                (member) => task.assignedMemberIds!.contains(member.userId),
+              )
+              .toList();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          context.tr('team_assignment'),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color:
+                isDarkMode ? AppTheme.darkCardColor : AppTheme.lightCardColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Team information
+              Row(
+                children: [
+                  Icon(Icons.groups, color: AppTheme.primaryColor, size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          team.name,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color:
+                                isDarkMode
+                                    ? AppTheme.darkPrimaryTextColor
+                                    : AppTheme.lightPrimaryTextColor,
+                          ),
+                        ),
+                        Text(
+                          '${team.memberCount} members',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color:
+                                isDarkMode
+                                    ? AppTheme.darkSecondaryTextColor
+                                    : AppTheme.lightSecondaryTextColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              // Assigned members information
+              if (assignedMembers.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppTheme.primaryColor.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        assignedMembers.length == 1
+                            ? 'Assigned to'
+                            : 'Assigned to ${assignedMembers.length} members',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.primaryColor.withOpacity(0.8),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Column(
+                        children:
+                            assignedMembers
+                                .map(
+                                  (member) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 16,
+                                          backgroundColor: AppTheme.primaryColor
+                                              .withOpacity(0.8),
+                                          child: Text(
+                                            member.displayName.isNotEmpty
+                                                ? member.displayName[0]
+                                                    .toUpperCase()
+                                                : 'M',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            member.displayName,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppTheme.primaryColor,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ] else ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.orange.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.orange, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Not assigned to any specific member',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.orange.shade700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }

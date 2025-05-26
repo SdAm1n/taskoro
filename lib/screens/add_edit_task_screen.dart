@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../models/task.dart';
+import '../models/team.dart';
 import '../services/task_provider.dart';
+import '../services/team_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_button.dart';
@@ -11,9 +13,10 @@ import '../localization/translation_helper.dart';
 
 class AddEditTaskScreen extends StatefulWidget {
   final Task? task; // If null, we're adding a new task; otherwise, editing
+  final String? preSelectedTeamId; // Pre-select a team when creating new task
 
   // const AddEditTaskScreen({Key? key, this.task}) : super(key: key);
-  const AddEditTaskScreen({super.key, this.task});
+  const AddEditTaskScreen({super.key, this.task, this.preSelectedTeamId});
 
   @override
   State<AddEditTaskScreen> createState() => _AddEditTaskScreenState();
@@ -27,6 +30,8 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   late DateTime _selectedEndDate;
   late TaskPriority _selectedPriority;
   late TaskCategory _selectedCategory;
+  String? _selectedTeamId;
+  List<String> _selectedMemberIds = [];
 
   bool get isEditing => widget.task != null;
 
@@ -52,6 +57,8 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
 
     _selectedPriority = widget.task?.priority ?? TaskPriority.medium;
     _selectedCategory = widget.task?.category ?? TaskCategory.personal;
+    _selectedTeamId = widget.task?.assignedTeamId ?? widget.preSelectedTeamId;
+    _selectedMemberIds = widget.task?.assignedMemberIds ?? [];
   }
 
   @override
@@ -78,6 +85,9 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
         category: _selectedCategory,
         isCompleted: isEditing ? widget.task!.isCompleted : false,
         createdAt: isEditing ? widget.task!.createdAt : DateTime.now(),
+        assignedTeamId: _selectedTeamId,
+        assignedMemberIds:
+            _selectedMemberIds.isNotEmpty ? _selectedMemberIds : null,
       );
 
       if (isEditing) {
@@ -449,6 +459,16 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                   ],
                 ),
 
+                const SizedBox(height: 24),
+
+                // Team Assignment Section
+                Text(
+                  context.tr('team_assignment'),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                const SizedBox(height: 8),
+                _buildTeamAssignmentSection(),
+
                 const SizedBox(height: 40),
 
                 // Save button
@@ -583,6 +603,397 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTeamAssignmentSection() {
+    final teamProvider = Provider.of<TeamProvider>(context);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Team selection
+        Text(
+          context.tr('assign_to_team'),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color:
+                isDarkMode
+                    ? AppTheme.darkSecondaryTextColor
+                    : AppTheme.lightSecondaryTextColor,
+          ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () => _showTeamSelectionDialog(),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color:
+                  isDarkMode
+                      ? AppTheme.darkSurfaceColor
+                      : AppTheme.lightSurfaceColor,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color:
+                    _selectedTeamId != null
+                        ? AppTheme.primaryColor
+                        : Colors.transparent,
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _selectedTeamId != null
+                      ? teamProvider.teams
+                          .firstWhere((team) => team.id == _selectedTeamId)
+                          .name
+                      : context.tr('select_team_optional'),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color:
+                        _selectedTeamId != null
+                            ? (isDarkMode
+                                ? AppTheme.darkPrimaryTextColor
+                                : AppTheme.lightPrimaryTextColor)
+                            : (isDarkMode
+                                ? AppTheme.darkSecondaryTextColor
+                                : AppTheme.lightSecondaryTextColor),
+                  ),
+                ),
+                Row(
+                  children: [
+                    if (_selectedTeamId != null) ...[
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedTeamId = null;
+                            _selectedMemberIds.clear();
+                          });
+                        },
+                        child: Icon(
+                          Icons.clear,
+                          size: 16,
+                          color: AppTheme.accentRed,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Icon(
+                      Icons.arrow_drop_down,
+                      size: 16,
+                      color:
+                          isDarkMode
+                              ? AppTheme.darkSecondaryTextColor
+                              : AppTheme.lightSecondaryTextColor,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Member selection (only show if team is selected)
+        if (_selectedTeamId != null) ...[
+          const SizedBox(height: 16),
+          Text(
+            context.tr('assign_to_member'),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color:
+                  isDarkMode
+                      ? AppTheme.darkSecondaryTextColor
+                      : AppTheme.lightSecondaryTextColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () => _showMemberSelectionDialog(),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color:
+                    isDarkMode
+                        ? AppTheme.darkSurfaceColor
+                        : AppTheme.lightSurfaceColor,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color:
+                      _selectedMemberIds.isNotEmpty
+                          ? AppTheme.primaryColor
+                          : Colors.transparent,
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _selectedMemberIds.isNotEmpty
+                        ? _getSelectedMembersText()
+                        : context.tr('select_members_optional'),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color:
+                          _selectedMemberIds.isNotEmpty
+                              ? (isDarkMode
+                                  ? AppTheme.darkPrimaryTextColor
+                                  : AppTheme.lightPrimaryTextColor)
+                              : (isDarkMode
+                                  ? AppTheme.darkSecondaryTextColor
+                                  : AppTheme.lightSecondaryTextColor),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      if (_selectedMemberIds.isNotEmpty) ...[
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedMemberIds.clear();
+                            });
+                          },
+                          child: Icon(
+                            Icons.clear,
+                            size: 16,
+                            color: AppTheme.accentRed,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      Icon(
+                        Icons.arrow_drop_down,
+                        size: 16,
+                        color:
+                            isDarkMode
+                                ? AppTheme.darkSecondaryTextColor
+                                : AppTheme.lightSecondaryTextColor,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  String _getSelectedMembersText() {
+    if (_selectedTeamId == null || _selectedMemberIds.isEmpty) return '';
+
+    final teamProvider = Provider.of<TeamProvider>(context, listen: false);
+    final team = teamProvider.teams.firstWhere(
+      (team) => team.id == _selectedTeamId,
+      orElse:
+          () => Team(
+            id: '',
+            name: '',
+            description: '',
+            ownerId: '',
+            members: [],
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+    );
+
+    if (_selectedMemberIds.length == 1) {
+      final member = team.members.firstWhere(
+        (member) => member.userId == _selectedMemberIds.first,
+        orElse:
+            () => TeamMember(
+              userId: '',
+              displayName: '',
+              email: '',
+              role: TeamRole.member,
+              joinedAt: DateTime.now(),
+            ),
+      );
+      return member.displayName;
+    } else {
+      return '${_selectedMemberIds.length} members selected';
+    }
+  }
+
+  void _showTeamSelectionDialog() {
+    final teamProvider = Provider.of<TeamProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      builder:
+          (dialogContext) => AlertDialog(
+            title: Text(context.tr('select_team')),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: Icon(Icons.person),
+                    title: Text(context.tr('personal_task')),
+                    subtitle: Text(context.tr('not_assigned_to_team')),
+                    onTap: () {
+                      setState(() {
+                        _selectedTeamId = null;
+                        _selectedMemberIds.clear();
+                      });
+                      Navigator.pop(dialogContext);
+                    },
+                    selected: _selectedTeamId == null,
+                  ),
+                  const Divider(),
+                  ...teamProvider.teams.map(
+                    (team) => ListTile(
+                      leading: Icon(Icons.groups),
+                      title: Text(team.name),
+                      subtitle: Text(
+                        '${team.memberCount} ${context.tr('team_members')}',
+                      ),
+                      onTap: () {
+                        setState(() {
+                          _selectedTeamId = team.id;
+                          _selectedMemberIds.clear(); // Reset member selection
+                        });
+                        Navigator.pop(dialogContext);
+                      },
+                      selected: _selectedTeamId == team.id,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(context.tr('cancel')),
+              ),
+            ],
+          ),
+    );
+  }
+
+  void _showMemberSelectionDialog() {
+    if (_selectedTeamId == null) return;
+
+    final teamProvider = Provider.of<TeamProvider>(context, listen: false);
+    final team = teamProvider.teams.firstWhere(
+      (team) => team.id == _selectedTeamId,
+    );
+
+    List<String> tempSelectedMemberIds = List.from(_selectedMemberIds);
+
+    showDialog(
+      context: context,
+      builder:
+          (dialogContext) => StatefulBuilder(
+            builder:
+                (context, setDialogState) => AlertDialog(
+                  title: Text(context.tr('select_members')),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CheckboxListTile(
+                          title: Text(context.tr('select_all_members')),
+                          subtitle: Text(
+                            context.tr('assign_to_all_team_members'),
+                          ),
+                          value:
+                              tempSelectedMemberIds.length ==
+                                  team.members.length &&
+                              tempSelectedMemberIds.isNotEmpty,
+                          tristate: true,
+                          onChanged: (value) {
+                            setDialogState(() {
+                              if (value == true) {
+                                tempSelectedMemberIds =
+                                    team.members.map((m) => m.userId).toList();
+                              } else {
+                                tempSelectedMemberIds.clear();
+                              }
+                            });
+                          },
+                        ),
+                        const Divider(),
+                        ...team.members.map(
+                          (member) => CheckboxListTile(
+                            secondary: CircleAvatar(
+                              backgroundColor: AppTheme.primaryColor
+                                  .withOpacity(0.8),
+                              child: Text(
+                                member.displayName.isNotEmpty
+                                    ? member.displayName[0].toUpperCase()
+                                    : 'M',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            title: Text(member.displayName),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(member.email),
+                                if (member.role == TeamRole.owner)
+                                  Container(
+                                    margin: const EdgeInsets.only(top: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.accentYellow.withOpacity(
+                                        0.2,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      context.tr('team_owner'),
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.accentYellow,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            value: tempSelectedMemberIds.contains(
+                              member.userId,
+                            ),
+                            onChanged: (checked) {
+                              setDialogState(() {
+                                if (checked == true) {
+                                  tempSelectedMemberIds.add(member.userId);
+                                } else {
+                                  tempSelectedMemberIds.remove(member.userId);
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: Text(context.tr('cancel')),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _selectedMemberIds = tempSelectedMemberIds;
+                        });
+                        Navigator.pop(dialogContext);
+                      },
+                      child: Text(context.tr('ok')),
+                    ),
+                  ],
+                ),
+          ),
     );
   }
 }

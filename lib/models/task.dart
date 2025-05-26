@@ -13,6 +13,8 @@ class Task {
   final bool isCompleted;
   final DateTime createdAt;
   final List<String>? subtasks;
+  final String? assignedTeamId;
+  final List<String>? assignedMemberIds;
 
   Task({
     required this.id,
@@ -25,6 +27,8 @@ class Task {
     this.isCompleted = false,
     required this.createdAt,
     this.subtasks,
+    this.assignedTeamId,
+    this.assignedMemberIds,
   });
 
   Task copyWith({
@@ -38,6 +42,8 @@ class Task {
     bool? isCompleted,
     DateTime? createdAt,
     List<String>? subtasks,
+    String? assignedTeamId,
+    List<String>? assignedMemberIds,
   }) {
     return Task(
       id: id ?? this.id,
@@ -50,6 +56,8 @@ class Task {
       isCompleted: isCompleted ?? this.isCompleted,
       createdAt: createdAt ?? this.createdAt,
       subtasks: subtasks ?? this.subtasks,
+      assignedTeamId: assignedTeamId ?? this.assignedTeamId,
+      assignedMemberIds: assignedMemberIds ?? this.assignedMemberIds,
     );
   }
 
@@ -66,6 +74,8 @@ class Task {
       'isCompleted': isCompleted,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'subtasks': subtasks,
+      'assignedTeamId': assignedTeamId,
+      'assignedMemberIds': assignedMemberIds,
     };
   }
 
@@ -89,6 +99,11 @@ class Task {
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt']),
       subtasks:
           map['subtasks'] != null ? List<String>.from(map['subtasks']) : null,
+      assignedTeamId: map['assignedTeamId'],
+      assignedMemberIds:
+          map['assignedMemberIds'] != null
+              ? List<String>.from(map['assignedMemberIds'])
+              : null,
     );
   }
 
@@ -121,4 +136,15 @@ class Task {
         return 'Other';
     }
   }
+
+  // Helper method to check if task is assigned to a team
+  bool get isTeamTask => assignedTeamId != null;
+
+  // Helper method to check if task is assigned to specific members
+  bool get isAssignedToMembers =>
+      assignedMemberIds != null && assignedMemberIds!.isNotEmpty;
+
+  // Helper method to check if task is assigned to a specific member
+  bool isAssignedToMember(String memberId) =>
+      assignedMemberIds?.contains(memberId) ?? false;
 }

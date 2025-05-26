@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../models/task.dart';
+import '../models/team.dart';
+import '../services/team_provider.dart';
 import '../theme/app_theme.dart';
 import 'task_priority_badge.dart';
 
@@ -105,6 +108,13 @@ class TaskCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
+
+              // Team assignment information
+              if (task.isTeamTask) ...[
+                const SizedBox(height: 8),
+                _buildTeamAssignmentInfo(context),
+              ],
+
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -196,5 +206,72 @@ class TaskCard extends StatelessWidget {
           ? AppTheme.darkSecondaryTextColor
           : AppTheme.lightSecondaryTextColor; // Upcoming
     }
+  }
+
+  Widget _buildTeamAssignmentInfo(BuildContext context) {
+    final teamProvider = Provider.of<TeamProvider>(context);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    if (!task.isTeamTask || task.assignedTeamId == null) {
+      return const SizedBox();
+    }
+
+    // Find the team
+    final team = teamProvider.teams.cast<Team?>().firstWhere(
+      (t) => t?.id == task.assignedTeamId,
+      orElse: () => null,
+    );
+
+    if (team == null) return const SizedBox();
+
+    // Find the assigned members if any
+    List<TeamMember> assignedMembers = [];
+    if (task.assignedMemberIds != null && task.assignedMemberIds!.isNotEmpty) {
+      assignedMembers =
+          team.members
+              .where(
+                (member) => task.assignedMemberIds!.contains(member.userId),
+              )
+              .toList();
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: AppTheme.primaryColor.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            assignedMembers.isNotEmpty ? Icons.person : Icons.groups,
+            size: 14,
+            color: AppTheme.primaryColor,
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              assignedMembers.isNotEmpty
+                  ? assignedMembers.length == 1
+                      ? '${team.name} • ${assignedMembers.first.displayName}'
+                      : '${team.name} • ${assignedMembers.length} members'
+                  : team.name,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.primaryColor,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

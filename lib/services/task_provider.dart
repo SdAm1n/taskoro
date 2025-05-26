@@ -65,6 +65,31 @@ class TaskProvider extends ChangeNotifier {
       category: TaskCategory.personal,
       createdAt: DateTime.now().subtract(const Duration(days: 3)),
     ),
+    // Team-assigned tasks
+    Task(
+      id: '6',
+      title: 'Review project documentation',
+      description: 'Review and update project documentation for the mobile app',
+      startDate: DateTime.now(),
+      endDate: DateTime.now().add(const Duration(days: 3)),
+      priority: TaskPriority.high,
+      category: TaskCategory.work,
+      createdAt: DateTime.now().subtract(const Duration(hours: 6)),
+      assignedTeamId: 'team1',
+      assignedMemberIds: ['member2', 'member3'],
+    ),
+    Task(
+      id: '7',
+      title: 'Test new features',
+      description: 'Test all new features before the release',
+      startDate: DateTime.now().add(const Duration(days: 1)),
+      endDate: DateTime.now().add(const Duration(days: 2)),
+      priority: TaskPriority.medium,
+      category: TaskCategory.work,
+      createdAt: DateTime.now().subtract(const Duration(hours: 3)),
+      assignedTeamId: 'team1',
+      assignedMemberIds: ['member1'],
+    ),
   ];
 
   // Getters
@@ -184,5 +209,99 @@ class TaskProvider extends ChangeNotifier {
   void updateUser(AppUser updatedUser) {
     _currentUser = updatedUser;
     notifyListeners();
+  }
+
+  // Team-related task methods
+
+  // Get tasks assigned to a specific team
+  List<Task> getTasksForTeam(String teamId) {
+    return _tasks.where((task) => task.assignedTeamId == teamId).toList();
+  }
+
+  // Get tasks assigned to a specific team member
+  List<Task> getTasksForMember(String memberId) {
+    return _tasks.where((task) => task.isAssignedToMember(memberId)).toList();
+  }
+
+  // Get tasks assigned to a specific team member within a specific team
+  List<Task> getTasksForTeamMember(String teamId, String memberId) {
+    return _tasks
+        .where(
+          (task) =>
+              task.assignedTeamId == teamId &&
+              task.isAssignedToMember(memberId),
+        )
+        .toList();
+  }
+
+  // Get all team-assigned tasks
+  List<Task> get teamTasks => _tasks.where((task) => task.isTeamTask).toList();
+
+  // Get personal (non-team) tasks
+  List<Task> get personalTasks =>
+      _tasks.where((task) => !task.isTeamTask).toList();
+
+  // Assign task to team members
+  void assignTaskToMembers(
+    String taskId,
+    String teamId,
+    List<String> memberIds,
+  ) {
+    final index = _tasks.indexWhere((task) => task.id == taskId);
+    if (index != -1) {
+      final task = _tasks[index];
+      _tasks[index] = task.copyWith(
+        assignedTeamId: teamId,
+        assignedMemberIds: memberIds,
+      );
+      notifyListeners();
+    }
+  }
+
+  // Assign task to a single team member (backward compatibility)
+  void assignTaskToMember(String taskId, String teamId, String memberId) {
+    assignTaskToMembers(taskId, teamId, [memberId]);
+  }
+
+  // Add a member to an existing task assignment
+  void addMemberToTask(String taskId, String memberId) {
+    final index = _tasks.indexWhere((task) => task.id == taskId);
+    if (index != -1) {
+      final task = _tasks[index];
+      final currentMembers = task.assignedMemberIds ?? [];
+      if (!currentMembers.contains(memberId)) {
+        final updatedMembers = [...currentMembers, memberId];
+        _tasks[index] = task.copyWith(assignedMemberIds: updatedMembers);
+        notifyListeners();
+      }
+    }
+  }
+
+  // Remove a member from an existing task assignment
+  void removeMemberFromTask(String taskId, String memberId) {
+    final index = _tasks.indexWhere((task) => task.id == taskId);
+    if (index != -1) {
+      final task = _tasks[index];
+      final currentMembers = task.assignedMemberIds ?? [];
+      if (currentMembers.contains(memberId)) {
+        final updatedMembers =
+            currentMembers.where((id) => id != memberId).toList();
+        _tasks[index] = task.copyWith(assignedMemberIds: updatedMembers);
+        notifyListeners();
+      }
+    }
+  }
+
+  // Remove team assignment from task
+  void removeTeamAssignment(String taskId) {
+    final index = _tasks.indexWhere((task) => task.id == taskId);
+    if (index != -1) {
+      final task = _tasks[index];
+      _tasks[index] = task.copyWith(
+        assignedTeamId: null,
+        assignedMemberIds: null,
+      );
+      notifyListeners();
+    }
   }
 }

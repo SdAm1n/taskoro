@@ -10,6 +10,7 @@ import 'screens/notifications_screen.dart';
 import 'services/task_provider.dart';
 import 'services/theme_provider.dart';
 import 'services/language_provider.dart';
+import 'services/team_provider.dart';
 import 'theme/app_theme.dart';
 import 'utils/custom_page_route.dart';
 import 'package:flutter/services.dart';
@@ -39,6 +40,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => LanguageProvider()..initLanguage(),
         ),
+        ChangeNotifierProvider(create: (context) => TeamProvider()),
       ],
       child: Consumer2<ThemeProvider, LanguageProvider>(
         builder: (context, themeProvider, languageProvider, _) {

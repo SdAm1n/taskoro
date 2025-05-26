@@ -50,7 +50,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       task.endDate.difference(DateTime.now()).inDays <= 7;
                 }).toList();
             break;
-          case 3: // Completed
+          case 3: // Personal
+            _filteredTasks =
+                taskProvider.tasks.where((task) => !task.isTeamTask).toList();
+            break;
+          case 4: // Team Tasks
+            _filteredTasks =
+                taskProvider.tasks.where((task) => task.isTeamTask).toList();
+            break;
+          case 5: // Completed
             _filteredTasks = taskProvider.completedTasks;
             break;
         }
@@ -559,8 +567,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                         2,
                                       ),
                                       _buildFilterChip(
-                                        context.tr('completed'),
+                                        context.tr('personal_tasks'),
                                         3,
+                                      ),
+                                      _buildFilterChip(
+                                        context.tr('team_tasks'),
+                                        4,
+                                      ),
+                                      _buildFilterChip(
+                                        context.tr('completed'),
+                                        5,
                                       ),
                                     ],
                                   ),

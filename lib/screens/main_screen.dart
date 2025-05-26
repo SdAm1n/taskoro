@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'home_screen.dart';
 import 'calendar_screen.dart';
 import 'analytics_screen.dart';
+import 'teams_screen.dart';
 import 'settings_screen.dart';
 import '../services/theme_provider.dart';
 import '../theme/app_theme.dart';
@@ -22,6 +23,7 @@ class _MainScreenState extends State<MainScreen> {
     const HomeScreen(),
     const CalendarScreen(),
     const AnalyticsScreen(),
+    const TeamsScreen(),
     const SettingsScreen(),
   ];
 
@@ -82,10 +84,17 @@ class _MainScreenState extends State<MainScreen> {
                   isDarkMode: isDarkMode,
                 ),
                 _buildNavItem(
+                  icon: Icons.groups_outlined,
+                  activeIcon: Icons.groups,
+                  label: context.tr('teams'),
+                  index: 3,
+                  isDarkMode: isDarkMode,
+                ),
+                _buildNavItem(
                   icon: Icons.settings_outlined,
                   activeIcon: Icons.settings,
                   label: context.tr('settings'),
-                  index: 3,
+                  index: 4,
                   isDarkMode: isDarkMode,
                 ),
               ],
@@ -114,7 +123,7 @@ class _MainScreenState extends State<MainScreen> {
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
       child: SizedBox(
-        width: 70,
+        width: 60,
         height: 70,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
