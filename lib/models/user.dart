@@ -1,6 +1,6 @@
 class AppUser {
   final String id;
-  final String displayName;
+  final String displayName; // This will now store the username
   final String email;
   final String? photoUrl;
   final DateTime createdAt;
@@ -14,6 +14,9 @@ class AppUser {
     required this.createdAt,
     this.settings,
   });
+
+  // Convenience getter for username (same as displayName)
+  String get username => displayName;
 
   AppUser copyWith({
     String? id,

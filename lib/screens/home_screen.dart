@@ -30,8 +30,64 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final taskProvider = Provider.of<TaskProvider>(context, listen: false);
+    // Only update if we have tasks loaded and filtered tasks is empty or outdated
+    if (taskProvider.tasks.isNotEmpty && _filteredTasks.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _updateFilteredTasks();
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   void _updateFilteredTasks() {
     final taskProvider = Provider.of<TaskProvider>(context, listen: false);
+
+    setState(() {
+      if (_searchQuery.isNotEmpty) {
+        _filteredTasks = taskProvider.searchTasks(_searchQuery);
+      } else {
+        switch (_selectedIndex) {
+          case 0: // All
+            _filteredTasks = taskProvider.tasks;
+            break;
+          case 1: // Today
+            _filteredTasks = taskProvider.getTasksForDate(DateTime.now());
+            break;
+          case 2: // Upcoming
+            _filteredTasks =
+                taskProvider.tasks.where((task) {
+                  return task.endDate.isAfter(DateTime.now()) &&
+                      task.endDate.difference(DateTime.now()).inDays <= 7;
+                }).toList();
+            break;
+          case 3: // Personal
+            _filteredTasks =
+                taskProvider.tasks.where((task) => !task.isTeamTask).toList();
+            break;
+          case 4: // Team Tasks
+            _filteredTasks =
+                taskProvider.tasks.where((task) => task.isTeamTask).toList();
+            break;
+          case 5: // Completed
+            _filteredTasks = taskProvider.completedTasks;
+            break;
+        }
+      }
+    });
+  }
+
+  void _updateFilteredTasksWithProvider(TaskProvider taskProvider) {
     setState(() {
       if (_searchQuery.isNotEmpty) {
         _filteredTasks = taskProvider.searchTasks(_searchQuery);
@@ -131,7 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 100,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.1),
+                  color: Colors.white.withValues(alpha: 0.1),
                 ),
               ),
             ),
@@ -143,7 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 120,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.1),
+                  color: Colors.white.withValues(alpha: 0.1),
                 ),
               ),
             ),
@@ -177,7 +233,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             Container(
                               padding: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
@@ -224,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Text(
                         context.tr('due_date'),
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 11,
                         ),
                       ),
@@ -235,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
+                          color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -265,7 +321,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -310,353 +366,410 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final taskProvider = Provider.of<TaskProvider>(context);
-    final user = taskProvider.currentUser;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    return Consumer<TaskProvider>(
+      builder: (context, taskProvider, child) {
+        final user = taskProvider.currentUser;
+        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    // Get high priority tasks
-    final priorityTasks = taskProvider.getTasksByPriority(TaskPriority.high);
+        // Get high priority tasks
+        final priorityTasks = taskProvider.getTasksByPriority(
+          TaskPriority.high,
+        );
 
-    return GestureDetector(
-      onTap: () {
-        // Dismiss keyboard when tapping outside of text field
-        FocusScope.of(context).unfocus();
-      },
-      child: Scaffold(
-        resizeToAvoidBottomInset: true, // This helps adjust for keyboard
-        backgroundColor:
-            isDarkMode
-                ? AppTheme.darkBackgroundColor
-                : AppTheme.lightBackgroundColor,
-        body: SafeArea(
-          bottom: false, // Allow content to extend past safe area at bottom
-          child: Column(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header with greeting and notification icon
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        // Update filtered tasks when provider data changes
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && taskProvider.tasks.isNotEmpty) {
+            _updateFilteredTasksWithProvider(taskProvider);
+          }
+        });
+
+        return GestureDetector(
+          onTap: () {
+            // Dismiss keyboard when tapping outside of text field
+            FocusScope.of(context).unfocus();
+          },
+          child: Scaffold(
+            resizeToAvoidBottomInset: true, // This helps adjust for keyboard
+            backgroundColor:
+                isDarkMode
+                    ? AppTheme.darkBackgroundColor
+                    : AppTheme.lightBackgroundColor,
+            body: SafeArea(
+              bottom: false, // Allow content to extend past safe area at bottom
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          // Header with greeting and notification icon
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                context.tr('hello'),
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                user.displayName,
-                                style:
-                                    Theme.of(context).textTheme.displayMedium,
-                              ),
-                            ],
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              // Navigate to notifications screen
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) => const NotificationsScreen(),
-                                ),
-                              );
-                            },
-                            child: Stack(
-                              children: [
-                                Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color:
-                                        isDarkMode
-                                            ? AppTheme.darkSurfaceColor
-                                            : AppTheme.lightSurfaceColor,
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppTheme.primaryColor
-                                            .withOpacity(0.2),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                    border: Border.all(
-                                      color: AppTheme.primaryColor.withOpacity(
-                                        0.3,
-                                      ),
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                  child: Icon(
-                                    Icons.notifications,
-                                    size: 22,
-                                    color: AppTheme.primaryColor,
-                                  ),
-                                ),
-                                // Notification badge
-                                Positioned(
-                                  top: 0,
-                                  right: 0,
-                                  child: Container(
-                                    width: 18,
-                                    height: 18,
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.accentRed,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color:
-                                            isDarkMode
-                                                ? AppTheme.darkBackgroundColor
-                                                : AppTheme.lightBackgroundColor,
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    child: const Center(
-                                      child: Text(
-                                        '3',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 14),
-
-                      // Modern Search bar with pill-shaped shadow
-                      Container(
-                        decoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color:
-                                  isDarkMode
-                                      ? AppTheme.primaryColor.withOpacity(0.2)
-                                      : Colors.black.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, -2), // Shadow at top
-                            ),
-                            BoxShadow(
-                              color:
-                                  isDarkMode
-                                      ? AppTheme.primaryColor.withOpacity(0.3)
-                                      : Colors.black.withOpacity(0.15),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4), // Shadow at bottom
-                            ),
-                          ],
-                          borderRadius: BorderRadius.circular(32),
-                        ),
-                        child: Container(
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color:
-                                isDarkMode
-                                    ? Colors.white.withOpacity(0.05)
-                                    : Colors.black.withOpacity(0.03),
-                            borderRadius: BorderRadius.circular(32),
-                          ),
-                          child: TextField(
-                            controller: _searchController,
-                            style: TextStyle(
-                              color:
-                                  isDarkMode
-                                      ? AppTheme.darkPrimaryTextColor
-                                      : AppTheme.lightPrimaryTextColor,
-                              fontSize: 14,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: context.tr('search_tasks'),
-                              hintStyle: TextStyle(
-                                color:
-                                    isDarkMode
-                                        ? AppTheme.darkDisabledTextColor
-                                        : AppTheme.lightDisabledTextColor,
-                                fontSize: 14,
-                              ),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 8.0,
-                              ),
-                              isDense: true,
-                              prefixIcon: Icon(
-                                Icons.search,
-                                color:
-                                    isDarkMode
-                                        ? AppTheme.darkSecondaryTextColor
-                                        : AppTheme.lightSecondaryTextColor,
-                                size: 20,
-                              ),
-                              prefixIconConstraints: const BoxConstraints(
-                                minWidth: 40,
-                                minHeight: 40,
-                              ),
-                            ),
-                            onChanged: (value) {
-                              setState(() {
-                                _searchQuery = value;
-                                _updateFilteredTasks();
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Expanded to make the rest of the content scrollable
-                      Expanded(
-                        child: SingleChildScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Priority Tasks Section
-                              if (priorityTasks.isNotEmpty) ...[
-                                Text(
-                                  context.tr('my_priority_tasks'),
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color:
-                                        isDarkMode
-                                            ? AppTheme.darkPrimaryTextColor
-                                            : AppTheme.lightPrimaryTextColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                SizedBox(
-                                  height: 170,
-                                  child: ListView.builder(
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount: priorityTasks.length,
-                                    itemBuilder: (context, index) {
-                                      return _buildPriorityTaskCard(
-                                        priorityTasks[index],
-                                      );
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                              ],
-
-                              // Filter tabs
-                              SizedBox(
-                                height: 40,
-                                child: Center(
-                                  child: ListView(
-                                    scrollDirection: Axis.horizontal,
-                                    children: [
-                                      _buildFilterChip(context.tr('all'), 0),
-                                      _buildFilterChip(context.tr('today'), 1),
-                                      _buildFilterChip(
-                                        context.tr('upcoming'),
-                                        2,
-                                      ),
-                                      _buildFilterChip(
-                                        context.tr('personal_tasks'),
-                                        3,
-                                      ),
-                                      _buildFilterChip(
-                                        context.tr('team_tasks'),
-                                        4,
-                                      ),
-                                      _buildFilterChip(
-                                        context.tr('completed'),
-                                        5,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 16),
-
-                              // Task count and date
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '${_filteredTasks.length} ${context.tr('tasks')}',
+                                    context.tr('hello'),
                                     style:
-                                        Theme.of(context).textTheme.bodyMedium,
+                                        Theme.of(context).textTheme.bodyLarge,
                                   ),
+                                  const SizedBox(height: 4),
                                   Text(
-                                    DateFormat(
-                                      'MMMM dd, yyyy',
-                                    ).format(DateTime.now()),
+                                    user.displayName, // This displays the username
                                     style:
-                                        Theme.of(context).textTheme.bodyMedium,
+                                        Theme.of(
+                                          context,
+                                        ).textTheme.displayMedium,
                                   ),
                                 ],
                               ),
+                              GestureDetector(
+                                onTap: () {
+                                  // Navigate to notifications screen
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (context) =>
+                                              const NotificationsScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      width: 48,
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        color:
+                                            isDarkMode
+                                                ? AppTheme.darkSurfaceColor
+                                                : AppTheme.lightSurfaceColor,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: AppTheme.primaryColor
+                                                .withValues(alpha: 0.2),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                        border: Border.all(
+                                          color: AppTheme.primaryColor
+                                              .withValues(alpha: 0.3),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        Icons.notifications,
+                                        size: 22,
+                                        color: AppTheme.primaryColor,
+                                      ),
+                                    ),
+                                    // Notification badge
+                                    Positioned(
+                                      top: 0,
+                                      right: 0,
+                                      child: Container(
+                                        width: 18,
+                                        height: 18,
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.accentRed,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color:
+                                                isDarkMode
+                                                    ? AppTheme
+                                                        .darkBackgroundColor
+                                                    : AppTheme
+                                                        .lightBackgroundColor,
+                                            width: 1.5,
+                                          ),
+                                        ),
+                                        child: const Center(
+                                          child: Text(
+                                            '3',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
 
-                              const SizedBox(height: 16),
+                          const SizedBox(height: 14),
 
-                              // Task list - Using SizedBox with ListView.builder
-                              _filteredTasks.isEmpty
-                                  ? _buildEmptyState()
-                                  : ListView.builder(
-                                    shrinkWrap: true,
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
-                                    itemCount: _filteredTasks.length,
-                                    itemBuilder: (context, index) {
-                                      final task = _filteredTasks[index];
-                                      return TaskCard(
-                                        task: task,
-                                        onTap: () {
-                                          Navigator.pushNamed(
-                                            context,
-                                            '/task_detail',
-                                            arguments: {'taskId': task.id},
+                          // Modern Search bar with pill-shaped shadow
+                          Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      isDarkMode
+                                          ? AppTheme.primaryColor.withValues(
+                                            alpha: 0.2,
+                                          )
+                                          : Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, -2), // Shadow at top
+                                ),
+                                BoxShadow(
+                                  color:
+                                      isDarkMode
+                                          ? AppTheme.primaryColor.withValues(
+                                            alpha: 0.3,
+                                          )
+                                          : Colors.black.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                  blurRadius: 8,
+                                  offset: const Offset(
+                                    0,
+                                    4,
+                                  ), // Shadow at bottom
+                                ),
+                              ],
+                              borderRadius: BorderRadius.circular(32),
+                            ),
+                            child: Container(
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color:
+                                    isDarkMode
+                                        ? Colors.white.withValues(alpha: 0.05)
+                                        : Colors.black.withValues(alpha: 0.03),
+                                borderRadius: BorderRadius.circular(32),
+                              ),
+                              child: TextField(
+                                controller: _searchController,
+                                style: TextStyle(
+                                  color:
+                                      isDarkMode
+                                          ? AppTheme.darkPrimaryTextColor
+                                          : AppTheme.lightPrimaryTextColor,
+                                  fontSize: 14,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: context.tr('search_tasks'),
+                                  hintStyle: TextStyle(
+                                    color:
+                                        isDarkMode
+                                            ? AppTheme.darkDisabledTextColor
+                                            : AppTheme.lightDisabledTextColor,
+                                    fontSize: 14,
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 8.0,
+                                  ),
+                                  isDense: true,
+                                  prefixIcon: Icon(
+                                    Icons.search,
+                                    color:
+                                        isDarkMode
+                                            ? AppTheme.darkSecondaryTextColor
+                                            : AppTheme.lightSecondaryTextColor,
+                                    size: 20,
+                                  ),
+                                  prefixIconConstraints: const BoxConstraints(
+                                    minWidth: 40,
+                                    minHeight: 40,
+                                  ),
+                                ),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _searchQuery = value;
+                                    _updateFilteredTasks();
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Expanded to make the rest of the content scrollable
+                          Expanded(
+                            child: SingleChildScrollView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Priority Tasks Section
+                                  if (priorityTasks.isNotEmpty) ...[
+                                    Text(
+                                      context.tr('my_priority_tasks'),
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color:
+                                            isDarkMode
+                                                ? AppTheme.darkPrimaryTextColor
+                                                : AppTheme
+                                                    .lightPrimaryTextColor,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    SizedBox(
+                                      height: 170,
+                                      child: ListView.builder(
+                                        scrollDirection: Axis.horizontal,
+                                        itemCount: priorityTasks.length,
+                                        itemBuilder: (context, index) {
+                                          return _buildPriorityTaskCard(
+                                            priorityTasks[index],
                                           );
                                         },
-                                        onToggleCompleted: () {
-                                          taskProvider.toggleTaskCompletion(
-                                            task.id,
-                                          );
-                                          _updateFilteredTasks();
-                                        },
-                                        onDelete: () {
-                                          try {
-                                            // Mark that we're in a deletion process
-                                            TaskDeletionState.markDeletionInProgress();
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                  ],
 
-                                            // Store a reference to the task title before deletion
-                                            final taskTitle = task.title;
+                                  // Filter tabs
+                                  SizedBox(
+                                    height: 40,
+                                    child: Center(
+                                      child: ListView(
+                                        scrollDirection: Axis.horizontal,
+                                        children: [
+                                          _buildFilterChip(
+                                            context.tr('all'),
+                                            0,
+                                          ),
+                                          _buildFilterChip(
+                                            context.tr('today'),
+                                            1,
+                                          ),
+                                          _buildFilterChip(
+                                            context.tr('upcoming'),
+                                            2,
+                                          ),
+                                          _buildFilterChip(
+                                            context.tr('personal_tasks'),
+                                            3,
+                                          ),
+                                          _buildFilterChip(
+                                            context.tr('team_tasks'),
+                                            4,
+                                          ),
+                                          _buildFilterChip(
+                                            context.tr('completed'),
+                                            5,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
 
-                                            final deleteSuccess = taskProvider
-                                                .deleteTask(task.id);
+                                  const SizedBox(height: 16),
 
-                                            Future.delayed(
-                                              const Duration(milliseconds: 200),
-                                              () {
+                                  // Task count and date
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        '${_filteredTasks.length} ${context.tr('tasks')}',
+                                        style:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium,
+                                      ),
+                                      Text(
+                                        DateFormat(
+                                          'MMMM dd, yyyy',
+                                        ).format(DateTime.now()),
+                                        style:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium,
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 16),
+
+                                  // Task list - Using SizedBox with ListView.builder
+                                  _filteredTasks.isEmpty
+                                      ? _buildEmptyState()
+                                      : ListView.builder(
+                                        shrinkWrap: true,
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
+                                        itemCount: _filteredTasks.length,
+                                        itemBuilder: (context, index) {
+                                          final task = _filteredTasks[index];
+                                          return TaskCard(
+                                            task: task,
+                                            onTap: () {
+                                              Navigator.pushNamed(
+                                                context,
+                                                '/task_detail',
+                                                arguments: {'taskId': task.id},
+                                              );
+                                            },
+                                            onToggleCompleted: () async {
+                                              final messenger =
+                                                  ScaffoldMessenger.of(context);
+                                              try {
+                                                await taskProvider
+                                                    .toggleTaskCompletion(
+                                                      task.id,
+                                                    );
                                                 if (mounted) {
-                                                  _updateFilteredTasks();
+                                                  _updateFilteredTasksWithProvider(
+                                                    taskProvider,
+                                                  );
+                                                }
+                                              } catch (e) {
+                                                if (mounted) {
+                                                  messenger.showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        'Failed to update task: $e',
+                                                      ),
+                                                      backgroundColor:
+                                                          Colors.red,
+                                                    ),
+                                                  );
+                                                }
+                                              }
+                                            },
+                                            onDelete: () async {
+                                              final messenger =
+                                                  ScaffoldMessenger.of(context);
+                                              final tr = context.tr;
+                                              try {
+                                                // Mark that we're in a deletion process
+                                                TaskDeletionState.markDeletionInProgress();
+
+                                                // Store a reference to the task title before deletion
+                                                final taskTitle = task.title;
+
+                                                final deleteSuccess =
+                                                    await taskProvider
+                                                        .deleteTask(task.id);
+
+                                                if (mounted) {
+                                                  _updateFilteredTasksWithProvider(
+                                                    taskProvider,
+                                                  );
 
                                                   // Show a snackbar confirmation based on success
                                                   if (deleteSuccess) {
-                                                    ScaffoldMessenger.of(
-                                                      context,
-                                                    ).showSnackBar(
+                                                    messenger.showSnackBar(
                                                       SnackBar(
                                                         content: Text(
-                                                          '${context.tr('task_deleted')}: "$taskTitle"',
+                                                          '${tr('task_deleted')}: "$taskTitle"',
                                                         ),
                                                         duration:
                                                             const Duration(
@@ -664,26 +777,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                                             ),
                                                       ),
                                                     );
-
-                                                    // Reset deletion state after showing the message
-                                                    Future.delayed(
-                                                      const Duration(
-                                                        milliseconds: 500,
-                                                      ),
-                                                      () {
-                                                        TaskDeletionState.reset();
-                                                      },
-                                                    );
                                                   } else {
-                                                    ScaffoldMessenger.of(
-                                                      context,
-                                                    ).showSnackBar(
+                                                    messenger.showSnackBar(
                                                       SnackBar(
                                                         content: Text(
-                                                          context.tr(
+                                                          tr(
                                                             'task_deleted_error',
                                                           ),
                                                         ),
+                                                        backgroundColor:
+                                                            Colors.red,
                                                         duration:
                                                             const Duration(
                                                               seconds: 3,
@@ -691,40 +794,63 @@ class _HomeScreenState extends State<HomeScreen> {
                                                       ),
                                                     );
                                                   }
+
+                                                  // Reset deletion state after handling
+                                                  TaskDeletionState.reset();
                                                 }
-                                              },
-                                            );
-                                          } catch (e) {
-                                            // Print error to console for debugging
-                                            debugPrint(
-                                              'Error deleting task: $e',
-                                            );
-                                          }
+                                              } catch (e) {
+                                                // Handle error with user feedback
+                                                debugPrint(
+                                                  'Error handling task deletion: $e',
+                                                );
+
+                                                // Reset deletion state on error
+                                                TaskDeletionState.reset();
+
+                                                if (mounted) {
+                                                  messenger.showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        'Error deleting task: $e',
+                                                      ),
+                                                      backgroundColor:
+                                                          Colors.red,
+                                                    ),
+                                                  );
+                                                }
+                                              }
+                                            },
+                                          );
                                         },
-                                      );
-                                    },
-                                  ),
-                              // Add extra padding at the bottom to ensure no overflow
-                              const SizedBox(height: 80),
-                            ],
+                                      ),
+                                  // Add extra padding at the bottom to ensure no overflow
+                                  const SizedBox(height: 80),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
+            floatingActionButton: FloatingActionButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/add_task').then((_) {
+                  // Refresh the task list when returning from add task screen
+                  if (mounted) {
+                    _updateFilteredTasks();
+                  }
+                });
+              },
+              backgroundColor: AppTheme.primaryColor,
+              child: const Icon(Icons.add, color: Colors.white),
+            ),
           ),
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.pushNamed(context, '/add_task');
-          },
-          backgroundColor: AppTheme.primaryColor,
-          child: const Icon(Icons.add, color: Colors.white),
-        ),
-      ),
+        );
+      },
     );
   }
 

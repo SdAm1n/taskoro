@@ -207,11 +207,23 @@ class TaskDetailScreen extends StatelessWidget {
                     ),
                     Switch(
                       value: task.isCompleted,
-                      onChanged: (value) {
-                        taskProvider.toggleTaskCompletion(task.id);
+                      onChanged: (value) async {
+                        final scaffoldMessenger = ScaffoldMessenger.of(context);
+                        try {
+                          await taskProvider.toggleTaskCompletion(task.id);
+                        } catch (e) {
+                          scaffoldMessenger.showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to update task: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       },
                       activeColor: AppTheme.accentGreen,
-                      activeTrackColor: AppTheme.accentGreen.withOpacity(0.3),
+                      activeTrackColor: AppTheme.accentGreen.withValues(
+                        alpha: 0.3,
+                      ),
                       inactiveThumbColor:
                           isDarkMode
                               ? AppTheme.darkSecondaryTextColor
@@ -289,8 +301,18 @@ class TaskDetailScreen extends StatelessWidget {
               // Complete/Reopen button
               CustomButton(
                 text: task.isCompleted ? 'Reopen Task' : 'Mark as Completed',
-                onPressed: () {
-                  taskProvider.toggleTaskCompletion(task.id);
+                onPressed: () async {
+                  final scaffoldMessenger = ScaffoldMessenger.of(context);
+                  try {
+                    await taskProvider.toggleTaskCompletion(task.id);
+                  } catch (e) {
+                    scaffoldMessenger.showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to update task: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 },
                 backgroundColor:
                     task.isCompleted
@@ -398,59 +420,60 @@ class TaskDetailScreen extends StatelessWidget {
                 child: Text(context.tr('cancel')),
               ),
               TextButton(
-                onPressed: () {
+                onPressed: () async {
+                  // Extract context references before any async operations
+                  final messenger = ScaffoldMessenger.of(context);
+                  final tr = context.tr;
+
                   try {
                     // Mark that we're in a deletion process to prevent "task not found" message
                     TaskDeletionState.markDeletionInProgress();
 
                     // Delete the task and close dialog first
-                    final result = taskProvider.deleteTask(task.id);
                     Navigator.pop(dialogContext);
 
-                    // After dialog is closed, we handle further actions
-                    if (result) {
-                      // Show success message immediately, before any navigation
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(context.tr('task_deleted')),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
+                    final success = await taskProvider.deleteTask(task.id);
 
-                      // Use a longer delay to ensure the snackbar is visible before navigation
-                      Future.delayed(const Duration(milliseconds: 500), () {
-                        if (context.mounted) {
-                          // Navigate back safely using our dedicated method
-                          _navigateBack(context);
-                        }
-                      });
+                    // After deletion is complete, handle navigation
+                    if (success) {
+                      // Show success message immediately
+                      if (context.mounted) {
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(tr('task_deleted')),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+
+                        // Navigate back using the current context (mounted check ensures it's valid)
+                        Navigator.of(context, rootNavigator: false).pop();
+                      }
+
+                      // Reset the deletion state after navigation
+                      TaskDeletionState.reset();
                     } else {
                       // Task not found or error, just show error message
-                      Future.delayed(const Duration(milliseconds: 100), () {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(context.tr('task_deleted_error')),
-                            ),
-                          );
+                      if (context.mounted) {
+                        messenger.showSnackBar(
+                          SnackBar(content: Text(tr('task_deleted_error'))),
+                        );
+                      }
 
-                          // Reset deletion state since we're not navigating away
-                          TaskDeletionState.reset();
-                        }
-                      });
+                      // Reset deletion state since we're not navigating away
+                      TaskDeletionState.reset();
                     }
                   } catch (e) {
                     // Handle error with feedback to user
                     debugPrint('Error deleting task: $e');
-                    Navigator.pop(dialogContext); // Close dialog
 
                     // Reset deletion state on error
                     TaskDeletionState.reset();
 
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         SnackBar(
                           content: Text('Error deleting task: ${e.toString()}'),
+                          backgroundColor: Colors.red,
                         ),
                       );
                     }
@@ -464,17 +487,6 @@ class TaskDetailScreen extends StatelessWidget {
             ],
           ),
     );
-  }
-
-  // Helper method to safely navigate back without triggering unexpected routes
-  void _navigateBack(BuildContext context) {
-    // Use our specialized navigation class to handle going back safely
-    TaskDetailNavigation.navigateBackToMain(context);
-
-    // Reset the deletion state after navigation has completed
-    Future.delayed(const Duration(milliseconds: 800), () {
-      TaskDeletionState.reset();
-    });
   }
 
   Widget _buildTeamAssignmentSection(BuildContext context, Task task) {
@@ -495,9 +507,12 @@ class TaskDetailScreen extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.orange.withOpacity(0.1),
+          color: Colors.orange.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.orange.withOpacity(0.3), width: 1),
+          border: Border.all(
+            color: Colors.orange.withValues(alpha: 0.3),
+            width: 1,
+          ),
         ),
         child: Row(
           children: [
@@ -587,10 +602,10 @@ class TaskDetailScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: AppTheme.primaryColor.withOpacity(0.3),
+                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
@@ -603,7 +618,7 @@ class TaskDetailScreen extends StatelessWidget {
                             : 'Assigned to ${assignedMembers.length} members',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppTheme.primaryColor.withOpacity(0.8),
+                          color: AppTheme.primaryColor.withValues(alpha: 0.8),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -618,7 +633,7 @@ class TaskDetailScreen extends StatelessWidget {
                                         CircleAvatar(
                                           radius: 16,
                                           backgroundColor: AppTheme.primaryColor
-                                              .withOpacity(0.8),
+                                              .withValues(alpha: 0.8),
                                           child: Text(
                                             member.displayName.isNotEmpty
                                                 ? member.displayName[0]
@@ -656,10 +671,10 @@ class TaskDetailScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
+                    color: Colors.orange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: Colors.orange.withOpacity(0.3),
+                      color: Colors.orange.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),

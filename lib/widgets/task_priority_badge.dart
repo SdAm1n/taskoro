@@ -40,7 +40,7 @@ class TaskPriorityBadge extends StatelessWidget {
         vertical: isSmall ? 4 : 6,
       ),
       decoration: BoxDecoration(
-        color: badgeColor.withOpacity(0.2),
+        color: badgeColor.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(isSmall ? 4 : 6),
         border: Border.all(color: badgeColor, width: 1),
       ),

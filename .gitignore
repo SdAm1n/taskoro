@@ -143,6 +143,7 @@ lib/generated_plugin_registrant.dart
 
 .github
 google-services.json
+android/app/google-services.json
 firebase-messaging-sw.js
 # Firebase related
 **/firebase/**/google-services.json

@@ -9,8 +9,8 @@ class NoBackWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => false, // This disables the back button
+    return PopScope(
+      canPop: false, // This disables the back button
       child: child,
     );
   }

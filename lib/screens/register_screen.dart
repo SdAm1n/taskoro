@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 import '../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -11,7 +13,7 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -19,10 +21,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _acceptTerms = false;
+  late StreamSubscription<User?> _authStateSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen for auth state changes to reset loading state when user is authenticated
+    _authStateSubscription = FirebaseAuth.instance.authStateChanges().listen((
+      User? user,
+    ) {
+      if (mounted && user != null && _isLoading) {
+        // User has been authenticated, reset loading state
+        setState(() {
+          _isLoading = false;
+        });
+        // Small delay to ensure UI updates, then pop if we're still mounted
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _authStateSubscription.cancel();
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -48,22 +74,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final user = await authService.registerWithEmailAndPassword(
         _emailController.text.trim(),
         _passwordController.text,
-        _nameController.text.trim(),
+        _usernameController.text.trim(),
       );
 
       if (mounted) {
         if (user != null) {
-          // Registration successful
+          // Registration successful - AuthWrapper will handle navigation
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Account created successfully! Redirecting...'),
+              content: Text('Account created successfully!'),
               backgroundColor: Colors.green,
-              duration: Duration(seconds: 1),
+              duration: Duration(seconds: 2),
             ),
           );
-          // Navigate back to let AuthWrapper handle the redirect
-          Navigator.of(context).pop();
+          // Don't reset loading state here - let auth state listener handle it
         } else {
+          // Reset loading state only if registration failed
+          setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Registration failed. Please try again.'),
@@ -77,6 +104,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         // Only show error if the user wasn't actually created
         final authService = context.read<AuthService>();
         if (authService.currentUser == null) {
+          setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
           );
@@ -84,18 +112,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
           // User was created successfully despite the error
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Account created successfully! Redirecting...'),
+              content: Text('Account created successfully!'),
               backgroundColor: Colors.green,
-              duration: Duration(seconds: 1),
+              duration: Duration(seconds: 2),
             ),
           );
-          // Navigate back to let AuthWrapper handle the redirect
-          Navigator.of(context).pop();
+          // Don't reset loading state here - let auth state listener handle it
         }
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
+    // Note: Removed finally block that was always resetting _isLoading
+    // Now only reset on explicit failure, let auth state listener handle success
   }
 
   Future<void> _signInWithGoogle() async {
@@ -110,13 +137,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
           // Google sign-in successful
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Signed in successfully! Redirecting...'),
+              content: Text('Signed in successfully!'),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 1),
             ),
           );
           // Navigate back to let AuthWrapper handle the redirect
           Navigator.of(context).pop();
+        } else {
+          // User cancelled or sign-in failed
+          setState(() => _isLoading = false);
         }
       }
     } catch (e) {
@@ -124,6 +154,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         // Only show error if the user wasn't actually signed in
         final authService = context.read<AuthService>();
         if (authService.currentUser == null) {
+          setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
           );
@@ -131,7 +162,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           // User was signed in successfully despite the error
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Signed in successfully! Redirecting...'),
+              content: Text('Signed in successfully!'),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 1),
             ),
@@ -140,9 +171,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Navigator.of(context).pop();
         }
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
+    // Note: Removed finally block - loading state managed by auth state listener and explicit resets
   }
 
   @override
@@ -178,18 +208,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Text(
                     'Create your account to get started',
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
 
-                  // Name Field
+                  // Username Field
                   TextFormField(
-                    controller: _nameController,
-                    textCapitalization: TextCapitalization.words,
+                    controller: _usernameController,
+                    textCapitalization: TextCapitalization.none,
                     decoration: InputDecoration(
-                      labelText: 'Full Name',
+                      labelText: 'Username',
                       prefixIcon: const Icon(Icons.person_outlined),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -197,10 +227,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your name';
+                        return 'Please enter a username';
                       }
-                      if (value.trim().length < 2) {
-                        return 'Name must be at least 2 characters';
+                      if (value.trim().length < 3) {
+                        return 'Username must be at least 3 characters';
+                      }
+                      if (value.trim().length > 20) {
+                        return 'Username must be less than 20 characters';
+                      }
+                      // Check for valid username pattern (letters, numbers, underscore, hyphen)
+                      if (!RegExp(r'^[a-zA-Z0-9_-]+$').hasMatch(value.trim())) {
+                        return 'Username can only contain letters, numbers, _ and -';
                       }
                       return null;
                     },

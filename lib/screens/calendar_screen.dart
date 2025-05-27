@@ -42,6 +42,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
   }
 
+  void _updateSelectedDayTasksWithProvider(TaskProvider taskProvider) {
+    if (_selectedDay != null) {
+      setState(() {
+        _selectedDayTasks = taskProvider.getTasksForDate(_selectedDay!);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final taskProvider = Provider.of<TaskProvider>(context);
@@ -64,7 +72,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -102,7 +110,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               },
               calendarStyle: CalendarStyle(
                 todayDecoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withOpacity(0.3),
+                  color: AppTheme.primaryColor.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                 ),
                 selectedDecoration: const BoxDecoration(
@@ -132,7 +140,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 titleCentered: true,
                 formatButtonVisible: true,
                 formatButtonDecoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 formatButtonTextStyle: TextStyle(color: AppTheme.primaryColor),
@@ -171,8 +179,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   fontWeight: FontWeight.bold,
                   color:
                       isDarkMode
-                          ? AppTheme.darkSecondaryTextColor.withOpacity(0.7)
-                          : AppTheme.lightSecondaryTextColor.withOpacity(0.7),
+                          ? AppTheme.darkSecondaryTextColor.withValues(
+                            alpha: 0.7,
+                          )
+                          : AppTheme.lightSecondaryTextColor.withValues(
+                            alpha: 0.7,
+                          ),
                 ),
               ),
             ),
@@ -223,7 +235,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             color: (isDarkMode
                                     ? AppTheme.darkSecondaryTextColor
                                     : AppTheme.lightSecondaryTextColor)
-                                .withOpacity(0.5),
+                                .withValues(alpha: 0.5),
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -234,7 +246,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               color: (isDarkMode
                                       ? AppTheme.darkSecondaryTextColor
                                       : AppTheme.lightSecondaryTextColor)
-                                  .withOpacity(0.7),
+                                  .withValues(alpha: 0.7),
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -255,7 +267,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               arguments: {'taskId': task.id},
                             ).then((_) => _updateSelectedDayTasks());
                           },
-                          onDelete: () {
+                          onDelete: () async {
+                            // Extract context reference before async gap
+                            final messenger = ScaffoldMessenger.of(context);
+
                             try {
                               // Mark that we're in a deletion process
                               TaskDeletionState.markDeletionInProgress();
@@ -263,56 +278,36 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               // Store reference to task title before deletion
                               final taskTitle = task.title;
 
-                              final deleteSuccess = taskProvider.deleteTask(
-                                task.id,
-                              );
+                              final deleteSuccess = await taskProvider
+                                  .deleteTask(task.id);
 
-                              // Use post frame callback for state update
-                              // Replace with a safer delayed execution approach
-                              Future.delayed(
-                                const Duration(milliseconds: 200),
-                                () {
-                                  if (mounted) {
-                                    _updateSelectedDayTasks();
+                              if (mounted) {
+                                _updateSelectedDayTasksWithProvider(
+                                  taskProvider,
+                                );
 
-                                    // Show confirmation message based on success
-                                    if (deleteSuccess) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Task "$taskTitle" deleted',
-                                          ),
-                                          duration: const Duration(seconds: 3),
-                                        ),
-                                      );
+                                // Show confirmation message based on success
+                                if (deleteSuccess) {
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Task "$taskTitle" deleted',
+                                      ),
+                                      duration: const Duration(seconds: 3),
+                                    ),
+                                  );
+                                } else {
+                                  messenger.showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Could not delete task'),
+                                      duration: Duration(seconds: 3),
+                                    ),
+                                  );
+                                }
 
-                                      // Reset deletion state after showing message
-                                      Future.delayed(
-                                        const Duration(milliseconds: 500),
-                                        () {
-                                          TaskDeletionState.reset();
-                                        },
-                                      );
-                                    } else {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Could not delete task',
-                                          ),
-                                          duration: Duration(seconds: 3),
-                                        ),
-                                      );
-
-                                      // Reset deletion state on failure
-                                      TaskDeletionState.reset();
-                                    }
-                                  }
-                                },
-                              );
+                                // Reset deletion state after handling
+                                TaskDeletionState.reset();
+                              }
                             } catch (e) {
                               // Handle error with user feedback
                               debugPrint('Error handling task deletion: $e');
@@ -321,17 +316,36 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               TaskDeletionState.reset();
 
                               if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
+                                messenger.showSnackBar(
                                   SnackBar(
                                     content: Text('Error deleting task: $e'),
+                                    backgroundColor: Colors.red,
                                   ),
                                 );
                               }
                             }
                           },
-                          onToggleCompleted: () {
-                            taskProvider.toggleTaskCompletion(task.id);
-                            _updateSelectedDayTasks();
+                          onToggleCompleted: () async {
+                            // Extract context reference before async gap
+                            final messenger = ScaffoldMessenger.of(context);
+
+                            try {
+                              await taskProvider.toggleTaskCompletion(task.id);
+                              if (mounted) {
+                                _updateSelectedDayTasksWithProvider(
+                                  taskProvider,
+                                );
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text('Failed to update task: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
                           },
                         );
                       },

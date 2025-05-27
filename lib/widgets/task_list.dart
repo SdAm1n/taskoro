@@ -55,7 +55,7 @@ class TaskList extends StatelessWidget {
             color: (isDarkMode
                     ? AppTheme.darkSecondaryTextColor
                     : AppTheme.lightSecondaryTextColor)
-                .withOpacity(0.5),
+                .withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
@@ -66,7 +66,7 @@ class TaskList extends StatelessWidget {
               color: (isDarkMode
                       ? AppTheme.darkSecondaryTextColor
                       : AppTheme.lightSecondaryTextColor)
-                  .withOpacity(0.7),
+                  .withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 8),
@@ -77,7 +77,7 @@ class TaskList extends StatelessWidget {
               color: (isDarkMode
                       ? AppTheme.darkSecondaryTextColor
                       : AppTheme.lightSecondaryTextColor)
-                  .withOpacity(0.7),
+                  .withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
           ),

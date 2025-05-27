@@ -15,7 +15,7 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _nameController;
+  late final TextEditingController _usernameController;
   late final TextEditingController _emailController;
   // Password controllers
   final TextEditingController _currentPasswordController =
@@ -29,13 +29,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     // Initialize the controllers with the current user data
     final user = Provider.of<TaskProvider>(context, listen: false).currentUser;
-    _nameController = TextEditingController(text: user.displayName);
+    _usernameController = TextEditingController(text: user.displayName);
     _emailController = TextEditingController(text: user.email);
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _usernameController.dispose();
     _emailController.dispose();
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
@@ -48,9 +48,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final taskProvider = Provider.of<TaskProvider>(context, listen: false);
       final currentUser = taskProvider.currentUser;
 
-      // Create updated user with new display name and email
+      // Create updated user with new username and email
       final updatedUser = currentUser.copyWith(
-        displayName: _nameController.text.trim(),
+        displayName: _usernameController.text.trim(),
         email: _emailController.text.trim(),
       );
 
@@ -205,14 +205,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     CircleAvatar(
                       radius: 50,
                       backgroundColor: Color.fromRGBO(
-                        AppTheme.primaryColor.red,
-                        AppTheme.primaryColor.green,
-                        AppTheme.primaryColor.blue,
+                        (AppTheme.primaryColor.r * 255).round(),
+                        (AppTheme.primaryColor.g * 255).round(),
+                        (AppTheme.primaryColor.b * 255).round(),
                         0.2,
                       ),
                       child: Text(
-                        _nameController.text.isNotEmpty
-                            ? _nameController.text[0].toUpperCase()
+                        _usernameController.text.isNotEmpty
+                            ? _usernameController.text[0].toUpperCase()
                             : 'U',
                         style: TextStyle(
                           color: AppTheme.primaryColor,
@@ -250,16 +250,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: 32),
 
-              // Name field
-              Text('Name', style: Theme.of(context).textTheme.bodyLarge),
+              // Username field
+              Text('Username', style: Theme.of(context).textTheme.bodyLarge),
               const SizedBox(height: 8),
               CustomTextField(
-                controller: _nameController,
-                hintText: 'Your name',
+                controller: _usernameController,
+                hintText: 'Your username',
                 prefixIcon: Icons.person_outline,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your name';
+                    return 'Please enter a username';
+                  }
+                  if (value.trim().length < 3) {
+                    return 'Username must be at least 3 characters';
+                  }
+                  if (value.trim().length > 20) {
+                    return 'Username must be less than 20 characters';
+                  }
+                  // Check for valid username pattern
+                  if (!RegExp(r'^[a-zA-Z0-9_-]+$').hasMatch(value.trim())) {
+                    return 'Username can only contain letters, numbers, _ and -';
                   }
                   return null;
                 },

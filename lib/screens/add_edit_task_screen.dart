@@ -32,6 +32,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   late TaskCategory _selectedCategory;
   String? _selectedTeamId;
   List<String> _selectedMemberIds = [];
+  bool _isSaving = false;
 
   bool get isEditing => widget.task != null;
 
@@ -68,15 +69,16 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
     super.dispose();
   }
 
-  void _saveTask() {
+  Future<void> _saveTask() async {
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isSaving = true;
+      });
+
       final taskProvider = Provider.of<TaskProvider>(context, listen: false);
 
       final task = Task(
-        id:
-            isEditing
-                ? widget.task!.id
-                : DateTime.now().millisecondsSinceEpoch.toString(),
+        id: isEditing ? widget.task!.id : '', // Let Firebase generate the ID
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         startDate: _selectedStartDate,
@@ -90,13 +92,53 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
             _selectedMemberIds.isNotEmpty ? _selectedMemberIds : null,
       );
 
-      if (isEditing) {
-        taskProvider.updateTask(task);
-      } else {
-        taskProvider.addTask(task);
-      }
+      try {
+        if (isEditing) {
+          await taskProvider.updateTask(task);
+        } else {
+          // Add task and wait for the result
+          final taskId = await taskProvider.addTask(task);
+          print('Task created with ID: $taskId'); // Debug log
+        }
 
-      Navigator.pop(context);
+        if (mounted) {
+          // Reset the saving state before navigation
+          setState(() {
+            _isSaving = false;
+          });
+
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                isEditing
+                    ? 'Task updated successfully'
+                    : 'Task created successfully',
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } catch (e) {
+        print('AddEditTaskScreen: Error in _saveTask: $e'); // Debug log
+        if (mounted) {
+          setState(() {
+            _isSaving = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                isEditing
+                    ? 'Failed to update task: $e'
+                    : 'Failed to create task: $e',
+              ),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -477,8 +519,9 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                       isEditing
                           ? context.tr('update_task')
                           : context.tr('add_task'),
-                  onPressed: _saveTask,
+                  onPressed: _isSaving ? () {} : _saveTask,
                   icon: isEditing ? Icons.save : Icons.add_circle,
+                  isLoading: _isSaving,
                 ),
               ],
             ),
@@ -508,7 +551,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           decoration: BoxDecoration(
             color:
                 isSelected
-                    ? color.withOpacity(0.2)
+                    ? color.withValues(alpha: 0.2)
                     : isDarkMode
                     ? AppTheme.darkSurfaceColor
                     : AppTheme.lightSurfaceColor,
@@ -559,7 +602,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           decoration: BoxDecoration(
             color:
                 isSelected
-                    ? color.withOpacity(0.2)
+                    ? color.withValues(alpha: 0.2)
                     : isDarkMode
                     ? AppTheme.darkSurfaceColor
                     : AppTheme.lightSurfaceColor,
@@ -918,8 +961,9 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                         ...team.members.map(
                           (member) => CheckboxListTile(
                             secondary: CircleAvatar(
-                              backgroundColor: AppTheme.primaryColor
-                                  .withOpacity(0.8),
+                              backgroundColor: AppTheme.primaryColor.withValues(
+                                alpha: 0.8,
+                              ),
                               child: Text(
                                 member.displayName.isNotEmpty
                                     ? member.displayName[0].toUpperCase()
@@ -944,8 +988,8 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                                       vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppTheme.accentYellow.withOpacity(
-                                        0.2,
+                                      color: AppTheme.accentYellow.withValues(
+                                        alpha: 0.2,
                                       ),
                                       borderRadius: BorderRadius.circular(8),
                                     ),

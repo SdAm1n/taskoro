@@ -255,7 +255,7 @@ class AppTheme {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(
-            color: lightSecondaryTextColor.withOpacity(0.2),
+            color: lightSecondaryTextColor.withValues(alpha: 0.2),
           ),
         ),
         focusedBorder: OutlineInputBorder(

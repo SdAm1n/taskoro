@@ -2,10 +2,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 import '../models/user.dart';
+import 'firebase_user_service.dart';
 
 class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final FirebaseUserService _userService = FirebaseUserService();
 
   // Current user
   User? get currentFirebaseUser => _auth.currentUser;
@@ -17,10 +19,16 @@ class AuthService extends ChangeNotifier {
   AppUser? _userFromFirebase(User? user) {
     if (user == null) return null;
 
+    // Get username/display name with fallback logic
+    String username =
+        user.displayName ??
+        user.email?.split('@').first ??
+        'user${user.uid.substring(0, 6)}';
+
     return AppUser(
       id: user.uid,
       email: user.email ?? '',
-      displayName: user.displayName ?? 'User',
+      displayName: username,
       photoUrl: user.photoURL,
       createdAt: user.metadata.creationTime ?? DateTime.now(),
     );
@@ -40,6 +48,12 @@ class AuthService extends ChangeNotifier {
         password: password,
       );
       final user = _userFromFirebase(result.user);
+
+      // Create or update user profile in Firestore (in case it doesn't exist)
+      if (user != null) {
+        await _userService.createOrUpdateUser(user);
+      }
+
       notifyListeners(); // Notify listeners of auth state change
       return user;
     } on FirebaseAuthException catch (e) {
@@ -47,8 +61,17 @@ class AuthService extends ChangeNotifier {
     } catch (e) {
       // Log the error but don't throw if the user was actually created
       if (_auth.currentUser != null) {
+        final user = _userFromFirebase(_auth.currentUser);
+        // Try to create/update profile even if there was an error
+        if (user != null) {
+          try {
+            await _userService.createOrUpdateUser(user);
+          } catch (_) {
+            // Profile update failed, but continue
+          }
+        }
         notifyListeners();
-        return _userFromFirebase(_auth.currentUser);
+        return user;
       }
       throw 'An unexpected error occurred. Please try again.';
     }
@@ -58,7 +81,7 @@ class AuthService extends ChangeNotifier {
   Future<AppUser?> registerWithEmailAndPassword(
     String email,
     String password,
-    String displayName,
+    String username,
   ) async {
     try {
       final UserCredential result = await _auth.createUserWithEmailAndPassword(
@@ -66,20 +89,39 @@ class AuthService extends ChangeNotifier {
         password: password,
       );
 
-      // Update display name
-      await result.user?.updateDisplayName(displayName);
+      // Update display name in Firebase Auth with the username
+      await result.user?.updateDisplayName(username);
       await result.user?.reload();
 
-      final user = _userFromFirebase(_auth.currentUser);
+      // Get the updated user
+      final updatedUser = _auth.currentUser;
+      final user = _userFromFirebase(updatedUser);
+
+      // Create user profile in Firestore with the username as displayName
+      if (user != null) {
+        final userWithUsername = user.copyWith(displayName: username);
+        await _userService.createOrUpdateUser(userWithUsername);
+      }
+
       notifyListeners(); // Notify listeners of auth state change
-      return user;
+      return user?.copyWith(displayName: username);
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {
       // Log the error but don't throw if the user was actually created
       if (_auth.currentUser != null) {
+        final user = _userFromFirebase(_auth.currentUser);
+        // Try to create profile even if there was an error
+        if (user != null) {
+          try {
+            final userWithUsername = user.copyWith(displayName: username);
+            await _userService.createOrUpdateUser(userWithUsername);
+          } catch (_) {
+            // Profile creation failed, but continue
+          }
+        }
         notifyListeners();
-        return _userFromFirebase(_auth.currentUser);
+        return user?.copyWith(displayName: username);
       }
       throw 'An unexpected error occurred. Please try again.';
     }
@@ -111,6 +153,18 @@ class AuthService extends ChangeNotifier {
         credential,
       );
       final user = _userFromFirebase(result.user);
+
+      // Create or update user profile in Firestore with proper display name
+      if (user != null) {
+        // For Google sign-in, use the Google display name
+        final properDisplayName =
+            result.user?.displayName ?? user.email.split('@').first;
+        final userWithCorrectName = user.copyWith(
+          displayName: properDisplayName,
+        );
+        await _userService.createOrUpdateUser(userWithCorrectName);
+      }
+
       notifyListeners(); // Notify listeners of auth state change
       return user;
     } catch (e) {

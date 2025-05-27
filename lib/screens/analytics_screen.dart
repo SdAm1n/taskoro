@@ -50,7 +50,7 @@ class AnalyticsScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryColor.withOpacity(0.3),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -94,7 +94,7 @@ class AnalyticsScreen extends StatelessWidget {
                   // Progress indicator
                   LinearProgressIndicator(
                     value: completionRate,
-                    backgroundColor: Colors.white.withOpacity(0.3),
+                    backgroundColor: Colors.white.withValues(alpha: 0.3),
                     valueColor: const AlwaysStoppedAnimation<Color>(
                       Colors.white,
                     ),
@@ -139,7 +139,7 @@ class AnalyticsScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 2),
                   ),
@@ -184,7 +184,7 @@ class AnalyticsScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 2),
                   ),
@@ -228,10 +228,10 @@ class AnalyticsScreen extends StatelessWidget {
                 color:
                     isDarkMode
                         ? AppTheme.darkCardColor
-                        : AppTheme.accentBlue.withOpacity(0.1),
+                        : AppTheme.accentBlue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: AppTheme.accentBlue.withOpacity(0.3),
+                  color: AppTheme.accentBlue.withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -293,7 +293,7 @@ class AnalyticsScreen extends StatelessWidget {
         ),
         Text(
           label,
-          style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14),
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 14),
         ),
       ],
     );
@@ -367,7 +367,7 @@ class AnalyticsScreen extends StatelessWidget {
           const SizedBox(height: 8),
           LinearProgressIndicator(
             value: progress,
-            backgroundColor: categoryColor.withOpacity(0.2),
+            backgroundColor: categoryColor.withValues(alpha: 0.2),
             valueColor: AlwaysStoppedAnimation<Color>(categoryColor),
             minHeight: 8,
             borderRadius: BorderRadius.circular(4),
@@ -407,7 +407,7 @@ class AnalyticsScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(

@@ -1,96 +1,67 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../models/task.dart';
 import '../models/user.dart';
+import 'firebase_task_service.dart';
+import 'firebase_user_service.dart';
 
 class TaskProvider extends ChangeNotifier {
-  // Dummy user for frontend development
-  AppUser _currentUser = AppUser(
-    id: 'user1',
-    displayName: 'John Doe',
-    email: 'john@example.com',
-    createdAt: DateTime.now(),
-    photoUrl: null,
-  );
+  final FirebaseTaskService _taskService = FirebaseTaskService();
+  final FirebaseUserService _userService = FirebaseUserService();
 
-  // Dummy tasks for frontend development
-  final List<Task> _tasks = [
-    Task(
-      id: '1',
-      title: 'Create UI design for mobile app',
-      description:
-          'Complete the UI design for the new mobile application. Include all screens and components.',
-      startDate: DateTime.now(),
-      endDate: DateTime.now().add(const Duration(days: 2)),
-      priority: TaskPriority.high,
-      category: TaskCategory.work,
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-    Task(
-      id: '2',
-      title: 'Buy groceries',
-      description: 'Milk, eggs, bread, fruits, vegetables',
-      startDate: DateTime.now(),
-      endDate: DateTime.now().add(const Duration(days: 1)),
-      priority: TaskPriority.medium,
-      category: TaskCategory.shopping,
-      createdAt: DateTime.now().subtract(const Duration(days: 2)),
-    ),
-    Task(
-      id: '3',
-      title: 'Workout session',
-      description: '30 min cardio, 30 min strength training',
-      startDate: DateTime.now(),
-      endDate: DateTime.now(),
-      priority: TaskPriority.low,
-      category: TaskCategory.health,
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-    Task(
-      id: '4',
-      title: 'Team meeting',
-      description: 'Discuss project progress and next steps with the team',
-      startDate: DateTime.now().add(const Duration(days: 2)),
-      endDate: DateTime.now().add(const Duration(days: 3)),
-      priority: TaskPriority.high,
-      category: TaskCategory.work,
-      createdAt: DateTime.now().subtract(const Duration(hours: 12)),
-    ),
-    Task(
-      id: '5',
-      title: 'Call mom',
-      description: "Don't forget to wish her happy birthday!",
-      startDate: DateTime.now(),
-      endDate: DateTime.now().add(const Duration(days: 1)),
-      priority: TaskPriority.medium,
-      category: TaskCategory.personal,
-      createdAt: DateTime.now().subtract(const Duration(days: 3)),
-    ),
-    // Team-assigned tasks
-    Task(
-      id: '6',
-      title: 'Review project documentation',
-      description: 'Review and update project documentation for the mobile app',
-      startDate: DateTime.now(),
-      endDate: DateTime.now().add(const Duration(days: 3)),
-      priority: TaskPriority.high,
-      category: TaskCategory.work,
-      createdAt: DateTime.now().subtract(const Duration(hours: 6)),
-      assignedTeamId: 'team1',
-      assignedMemberIds: ['member2', 'member3'],
-    ),
-    Task(
-      id: '7',
-      title: 'Test new features',
-      description: 'Test all new features before the release',
-      startDate: DateTime.now().add(const Duration(days: 1)),
-      endDate: DateTime.now().add(const Duration(days: 2)),
-      priority: TaskPriority.medium,
-      category: TaskCategory.work,
-      createdAt: DateTime.now().subtract(const Duration(hours: 3)),
-      assignedTeamId: 'team1',
-      assignedMemberIds: ['member1'],
-    ),
-  ];
+  // Current user and tasks
+  AppUser _currentUser = AppUser.empty();
+  List<Task> _tasks = [];
+  StreamSubscription<List<Task>>? _tasksSubscription;
+  StreamSubscription<AppUser?>? _userSubscription;
+
+  // Loading states
+  bool _isLoading = false;
+  bool _isInitialized = false;
+
+  // Constructor
+  TaskProvider() {
+    _initializeProvider();
+  }
+
+  // Initialize the provider with Firebase data
+  void _initializeProvider() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // Listen to user profile changes
+      _userSubscription = _userService.getCurrentUserProfileStream().listen((
+        user,
+      ) {
+        if (user != null) {
+          _currentUser = user;
+          _setupTasksListener();
+        }
+        notifyListeners();
+      });
+
+      _isInitialized = true;
+    } catch (e) {
+      // Handle error silently or log to crash reporting service
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Setup Firebase listener for tasks
+  void _setupTasksListener() {
+    _tasksSubscription?.cancel();
+    _tasksSubscription = _taskService.getUserTasks().listen((tasks) {
+      _tasks = tasks;
+      notifyListeners();
+    });
+  }
+
+  // Loading state getters
+  bool get isLoading => _isLoading;
+  bool get isInitialized => _isInitialized;
 
   // Getters
   AppUser get currentUser => _currentUser;
@@ -102,22 +73,29 @@ class TaskProvider extends ChangeNotifier {
 
   // Filter tasks by category
   List<Task> getTasksByCategory(TaskCategory category) {
-    return _tasks.where((task) => task.category == category).toList();
+    final filteredTasks =
+        _tasks.where((task) => task.category == category).toList();
+    return filteredTasks;
   }
 
   // Filter tasks by priority
   List<Task> getTasksByPriority(TaskPriority priority) {
-    return _tasks.where((task) => task.priority == priority).toList();
+    final filteredTasks =
+        _tasks.where((task) => task.priority == priority).toList();
+    return filteredTasks;
   }
 
   // Filter tasks by date
   List<Task> getTasksForDate(DateTime date) {
-    return _tasks.where((task) {
-      // A task is for a specific date if the date falls within its date range (inclusive)
-      return (date.isAtSameMomentAs(task.startDate) ||
-              date.isAfter(task.startDate)) &&
-          (date.isAtSameMomentAs(task.endDate) || date.isBefore(task.endDate));
-    }).toList();
+    final filteredTasks =
+        _tasks.where((task) {
+          // A task is for a specific date if the date falls within its date range (inclusive)
+          return (date.isAtSameMomentAs(task.startDate) ||
+                  date.isAfter(task.startDate)) &&
+              (date.isAtSameMomentAs(task.endDate) ||
+                  date.isBefore(task.endDate));
+        }).toList();
+    return filteredTasks;
   }
 
   // Filter tasks by search query
@@ -125,63 +103,116 @@ class TaskProvider extends ChangeNotifier {
     if (query.isEmpty) return _tasks;
 
     final lowercaseQuery = query.toLowerCase();
-    return _tasks.where((task) {
-      return task.title.toLowerCase().contains(lowercaseQuery) ||
-          task.description.toLowerCase().contains(lowercaseQuery);
-    }).toList();
+    final filteredTasks =
+        _tasks.where((task) {
+          return task.title.toLowerCase().contains(lowercaseQuery) ||
+              task.description.toLowerCase().contains(lowercaseQuery);
+        }).toList();
+    return filteredTasks;
   }
 
   // Add a new task
-  void addTask(Task task) {
-    _tasks.add(task);
-    notifyListeners();
+  Future<String?> addTask(Task task) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      // Add timeout to prevent hanging
+      final taskId = await _taskService
+          .createTask(task)
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('Task creation timed out');
+            },
+          );
+
+      print(
+        'TaskProvider: Task created successfully with ID: $taskId',
+      ); // Debug log
+
+      // The task will be automatically added to _tasks via the stream listener
+      return taskId;
+    } catch (e) {
+      print('TaskProvider: Error adding task: $e'); // Debug log
+      // Debug: Error adding task: $e
+      rethrow; // Re-throw so the UI can handle the error
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   // Update an existing task
-  void updateTask(Task updatedTask) {
-    final index = _tasks.indexWhere((task) => task.id == updatedTask.id);
-    if (index != -1) {
-      _tasks[index] = updatedTask;
+  Future<bool> updateTask(Task updatedTask) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      await _taskService.updateTask(updatedTask);
+      // The task will be automatically updated in _tasks via the stream listener
+      return true;
+    } catch (e) {
+      // Debug: Error updating task: $e
+      rethrow; // Re-throw so the UI can handle the error
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }
 
   // Delete a task
-  bool deleteTask(String taskId) {
+  Future<bool> deleteTask(String taskId) async {
     try {
-      final taskIndex = _tasks.indexWhere((task) => task.id == taskId);
-      if (taskIndex != -1) {
-        // Remove the task from the list
-        _tasks.removeAt(taskIndex);
-
-        // Immediate notification is important to avoid race conditions
-        // that could cause "task not found" messages to appear before
-        // the success message
-        notifyListeners();
-
-        return true; // Successfully deleted
-      } else {
-        debugPrint('Task not found for deletion: $taskId');
-        return false; // Task not found
+      // First, check if task exists
+      if (!_tasks.any((task) => task.id == taskId)) {
+        print('Task $taskId already deleted or not found');
+        return true; // Task already deleted
       }
+
+      print('Deleting task $taskId from Firebase...');
+      // Delete from Firebase
+      await _taskService.deleteTask(taskId);
+
+      print('Waiting for stream to update after deletion of task $taskId...');
+      // Wait for the stream listener to update _tasks by polling
+      // with a reasonable timeout to avoid infinite waiting
+      const maxWaitTime = Duration(seconds: 5);
+      const pollInterval = Duration(milliseconds: 100);
+      final startTime = DateTime.now();
+
+      while (_tasks.any((task) => task.id == taskId)) {
+        if (DateTime.now().difference(startTime) > maxWaitTime) {
+          print(
+            'Timeout waiting for stream update, forcing local removal of task $taskId',
+          );
+          // Timeout reached, but deletion likely succeeded in Firebase
+          // Force remove from local state as fallback
+          _tasks.removeWhere((task) => task.id == taskId);
+          notifyListeners();
+          break;
+        }
+        await Future.delayed(pollInterval);
+      }
+
+      print('Task $taskId successfully deleted and removed from UI');
+      return true;
     } catch (e) {
-      // Handle any errors silently to prevent UI glitches
-      debugPrint('Error deleting task: $e');
-
-      // Still notify listeners to ensure UI is updated
-      notifyListeners();
-
-      return false; // Error during deletion
+      print('Error deleting task $taskId: $e');
+      return false;
     }
   }
 
   // Toggle task completion status
-  void toggleTaskCompletion(String taskId) {
-    final index = _tasks.indexWhere((task) => task.id == taskId);
-    if (index != -1) {
-      final task = _tasks[index];
-      _tasks[index] = task.copyWith(isCompleted: !task.isCompleted);
-      notifyListeners();
+  Future<bool> toggleTaskCompletion(String taskId) async {
+    try {
+      final task = _tasks.firstWhere((t) => t.id == taskId);
+      final updatedTask = task.copyWith(isCompleted: !task.isCompleted);
+      await _taskService.updateTask(updatedTask);
+      return true;
+    } catch (e) {
+      // Debug: Error toggling task completion: $e
+      return false;
     }
   }
 
@@ -242,66 +273,66 @@ class TaskProvider extends ChangeNotifier {
       _tasks.where((task) => !task.isTeamTask).toList();
 
   // Assign task to team members
-  void assignTaskToMembers(
+  Future<bool> assignTaskToMembers(
     String taskId,
     String teamId,
     List<String> memberIds,
-  ) {
-    final index = _tasks.indexWhere((task) => task.id == taskId);
-    if (index != -1) {
-      final task = _tasks[index];
-      _tasks[index] = task.copyWith(
-        assignedTeamId: teamId,
-        assignedMemberIds: memberIds,
-      );
-      notifyListeners();
+  ) async {
+    try {
+      await _taskService.assignTaskToMembers(taskId, teamId, memberIds);
+      return true;
+    } catch (e) {
+      // Debug: Error assigning task to members: $e
+      return false;
     }
   }
 
   // Assign task to a single team member (backward compatibility)
-  void assignTaskToMember(String taskId, String teamId, String memberId) {
-    assignTaskToMembers(taskId, teamId, [memberId]);
+  Future<bool> assignTaskToMember(
+    String taskId,
+    String teamId,
+    String memberId,
+  ) async {
+    return assignTaskToMembers(taskId, teamId, [memberId]);
   }
 
   // Add a member to an existing task assignment
-  void addMemberToTask(String taskId, String memberId) {
-    final index = _tasks.indexWhere((task) => task.id == taskId);
-    if (index != -1) {
-      final task = _tasks[index];
-      final currentMembers = task.assignedMemberIds ?? [];
-      if (!currentMembers.contains(memberId)) {
-        final updatedMembers = [...currentMembers, memberId];
-        _tasks[index] = task.copyWith(assignedMemberIds: updatedMembers);
-        notifyListeners();
-      }
+  Future<bool> addMemberToTask(String taskId, String memberId) async {
+    try {
+      await _taskService.addMemberToTask(taskId, memberId);
+      return true;
+    } catch (e) {
+      // Debug: Error adding member to task: $e
+      return false;
     }
   }
 
   // Remove a member from an existing task assignment
-  void removeMemberFromTask(String taskId, String memberId) {
-    final index = _tasks.indexWhere((task) => task.id == taskId);
-    if (index != -1) {
-      final task = _tasks[index];
-      final currentMembers = task.assignedMemberIds ?? [];
-      if (currentMembers.contains(memberId)) {
-        final updatedMembers =
-            currentMembers.where((id) => id != memberId).toList();
-        _tasks[index] = task.copyWith(assignedMemberIds: updatedMembers);
-        notifyListeners();
-      }
+  Future<bool> removeMemberFromTask(String taskId, String memberId) async {
+    try {
+      await _taskService.removeMemberFromTask(taskId, memberId);
+      return true;
+    } catch (e) {
+      // Debug: Error removing member from task: $e
+      return false;
     }
   }
 
   // Remove team assignment from task
-  void removeTeamAssignment(String taskId) {
-    final index = _tasks.indexWhere((task) => task.id == taskId);
-    if (index != -1) {
-      final task = _tasks[index];
-      _tasks[index] = task.copyWith(
-        assignedTeamId: null,
-        assignedMemberIds: null,
-      );
-      notifyListeners();
+  Future<bool> removeTeamAssignment(String taskId) async {
+    try {
+      await _taskService.removeTeamAssignment(taskId);
+      return true;
+    } catch (e) {
+      // Debug: Error removing team assignment: $e
+      return false;
     }
+  }
+
+  @override
+  void dispose() {
+    _tasksSubscription?.cancel();
+    _userSubscription?.cancel();
+    super.dispose();
   }
 }

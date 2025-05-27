@@ -55,7 +55,7 @@ class TaskCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -210,7 +210,6 @@ class TaskCard extends StatelessWidget {
 
   Widget _buildTeamAssignmentInfo(BuildContext context) {
     final teamProvider = Provider.of<TeamProvider>(context);
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     if (!task.isTeamTask || task.assignedTeamId == null) {
       return const SizedBox();
@@ -238,10 +237,10 @@ class TaskCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withOpacity(0.1),
+        color: AppTheme.primaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: AppTheme.primaryColor.withOpacity(0.3),
+          color: AppTheme.primaryColor.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
