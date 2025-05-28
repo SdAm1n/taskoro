@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../models/task.dart';
 import '../services/task_provider.dart';
+import '../services/notification_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/task_card.dart';
 import '../widgets/ai_task_suggestions_widget.dart';
@@ -31,7 +32,21 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateFilteredTasks();
+      // Only generate notifications on first app launch, not every time home screen opens
+      _generateTaskNotificationsOnce();
     });
+  }
+
+  void _generateTaskNotificationsOnce() {
+    final taskProvider = Provider.of<TaskProvider>(context, listen: false);
+    final notificationProvider = Provider.of<NotificationProvider>(
+      context,
+      listen: false,
+    );
+
+    // Only generate notifications if we haven't generated them recently
+    // This respects the 1-hour cooldown period in NotificationProvider
+    notificationProvider.generateTaskNotifications(taskProvider.tasks);
   }
 
   @override
@@ -773,70 +788,81 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                   );
                                 },
-                                child: Stack(
-                                  children: [
-                                    Container(
-                                      width: 48,
-                                      height: 48,
-                                      decoration: BoxDecoration(
-                                        color:
-                                            isDarkMode
-                                                ? AppTheme.darkSurfaceColor
-                                                : AppTheme.lightSurfaceColor,
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: AppTheme.primaryColor
-                                                .withValues(alpha: 0.2),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                        border: Border.all(
-                                          color: AppTheme.primaryColor
-                                              .withValues(alpha: 0.3),
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                      child: Icon(
-                                        Icons.notifications,
-                                        size: 22,
-                                        color: AppTheme.primaryColor,
-                                      ),
-                                    ),
-                                    // Notification badge
-                                    Positioned(
-                                      top: 0,
-                                      right: 0,
-                                      child: Container(
-                                        width: 18,
-                                        height: 18,
-                                        decoration: BoxDecoration(
-                                          color: AppTheme.accentRed,
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
+                                child: Consumer<NotificationProvider>(
+                                  builder: (context, notificationProvider, _) {
+                                    final unreadCount =
+                                        notificationProvider.unreadCount;
+
+                                    return Stack(
+                                      children: [
+                                        Container(
+                                          width: 48,
+                                          height: 48,
+                                          decoration: BoxDecoration(
                                             color:
                                                 isDarkMode
-                                                    ? AppTheme
-                                                        .darkBackgroundColor
+                                                    ? AppTheme.darkSurfaceColor
                                                     : AppTheme
-                                                        .lightBackgroundColor,
-                                            width: 1.5,
-                                          ),
-                                        ),
-                                        child: const Center(
-                                          child: Text(
-                                            '3',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
+                                                        .lightSurfaceColor,
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: AppTheme.primaryColor
+                                                    .withValues(alpha: 0.2),
+                                                blurRadius: 8,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ],
+                                            border: Border.all(
+                                              color: AppTheme.primaryColor
+                                                  .withValues(alpha: 0.3),
+                                              width: 1.5,
                                             ),
                                           ),
+                                          child: Icon(
+                                            Icons.notifications,
+                                            size: 22,
+                                            color: AppTheme.primaryColor,
+                                          ),
                                         ),
-                                      ),
-                                    ),
-                                  ],
+                                        // Notification badge - only show if there are unread notifications
+                                        if (unreadCount > 0)
+                                          Positioned(
+                                            top: 0,
+                                            right: 0,
+                                            child: Container(
+                                              width: 18,
+                                              height: 18,
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.accentRed,
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color:
+                                                      isDarkMode
+                                                          ? AppTheme
+                                                              .darkBackgroundColor
+                                                          : AppTheme
+                                                              .lightBackgroundColor,
+                                                  width: 1.5,
+                                                ),
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  unreadCount > 99
+                                                      ? '99+'
+                                                      : unreadCount.toString(),
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    );
+                                  },
                                 ),
                               ),
                             ],

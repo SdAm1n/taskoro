@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../services/task_provider.dart';
+import '../services/notification_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_app_bar.dart';
+import '../utils/notification_extensions.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -13,27 +15,29 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  List<NotificationItem> _notifications = [];
-
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeNotifications();
-    });
+    // Remove automatic notification generation that causes notifications to reappear
+    // Notifications should only be generated when tasks are created/updated, not when viewing them
   }
 
-  void _initializeNotifications() {
+  void _generateTaskNotifications() {
     final taskProvider = Provider.of<TaskProvider>(context, listen: false);
-    setState(() {
-      _notifications = _getNotifications(taskProvider);
-    });
+
+    // Generate notifications based on current tasks using TaskProvider method
+    taskProvider.generateTaskNotifications();
   }
 
-  void _removeNotification(int index) {
-    setState(() {
-      _notifications.removeAt(index);
-    });
+  void _createSampleNotifications() {
+    final taskProvider = Provider.of<TaskProvider>(context, listen: false);
+
+    // Create sample notifications for testing
+    taskProvider.createSampleNotifications();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Sample notifications created for testing')),
+    );
   }
 
   @override
@@ -45,18 +49,47 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           isDarkMode
               ? AppTheme.darkBackgroundColor
               : AppTheme.lightBackgroundColor,
-      appBar: CustomAppBar(title: 'Notifications'),
-      body:
-          _notifications.isEmpty
-              ? _buildEmptyState(context)
-              : ListView.builder(
-                padding: const EdgeInsets.all(16.0),
-                itemCount: _notifications.length,
-                itemBuilder: (context, index) {
-                  final notification = _notifications[index];
-                  return _buildNotificationItem(context, notification, index);
-                },
-              ),
+      appBar: CustomAppBar(
+        title: 'Notifications',
+        actions: [
+          Consumer<NotificationProvider>(
+            builder: (context, notificationProvider, _) {
+              if (notificationProvider.hasUnreadNotifications) {
+                return TextButton(
+                  onPressed: () => notificationProvider.markAllAsRead(),
+                  child: Text(
+                    'Mark all read',
+                    style: TextStyle(color: AppTheme.primaryColor),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        ],
+      ),
+      body: Consumer<NotificationProvider>(
+        builder: (context, notificationProvider, _) {
+          final notifications = notificationProvider.notifications;
+
+          if (notifications.isEmpty) {
+            return _buildEmptyState(context);
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16.0),
+            itemCount: notifications.length,
+            itemBuilder: (context, index) {
+              final notification = notifications[index];
+              return _buildNotificationItem(
+                context,
+                notification,
+                notificationProvider,
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -102,14 +135,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget _buildNotificationItem(
     BuildContext context,
     NotificationItem notification,
-    int index,
+    NotificationProvider notificationProvider,
   ) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Dismissible(
-      key: Key(
-        notification.timestamp.toString() + (notification.relatedTaskId ?? ''),
-      ),
+      key: Key(notification.id),
       background: Container(
         decoration: BoxDecoration(
           color: AppTheme.accentRed,
@@ -121,7 +152,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
       direction: DismissDirection.endToStart,
       onDismissed: (direction) {
-        _removeNotification(index);
+        notificationProvider.removeNotification(notification.id);
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Notification dismissed')));
@@ -197,15 +228,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   )
                   : null,
           onTap: () {
-            // Handle notification tap (e.g., mark as read, navigate to related content)
+            // Mark as read if unread
             if (notification.isUnread) {
-              // In a real app, you would update the notification status
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Notification marked as read')),
-              );
+              notificationProvider.markAsRead(notification.id);
             }
 
-            // Navigate to the related task or screen based on notification type
+            // Navigate to related content if available
             if (notification.relatedTaskId != null) {
               Navigator.pushNamed(
                 context,
@@ -217,141 +245,5 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ),
       ),
     );
-  }
-
-  // Sample notifications for demo purposes
-  // In a real app, these would come from a notification service
-  List<NotificationItem> _getNotifications(TaskProvider taskProvider) {
-    final tasks = taskProvider.tasks;
-    final now = DateTime.now();
-    final notifications = <NotificationItem>[];
-
-    // Create sample notifications based on existing tasks
-    if (tasks.isNotEmpty) {
-      // Upcoming task notifications
-      final upcomingTasks =
-          tasks
-              .where(
-                (task) =>
-                    !task.isCompleted &&
-                    task.endDate.isAfter(now) &&
-                    task.endDate.difference(now).inDays <= 2,
-              )
-              .toList();
-
-      for (final task in upcomingTasks) {
-        notifications.add(
-          NotificationItem(
-            title: 'Upcoming Task',
-            message:
-                '${task.title} is due ${DateFormat('MMM dd').format(task.endDate)}',
-            timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-            type: NotificationType.taskReminder,
-            isUnread: true,
-            relatedTaskId: task.id,
-          ),
-        );
-      }
-
-      // Overdue task notifications
-      final overdueTasks =
-          tasks
-              .where((task) => !task.isCompleted && task.endDate.isBefore(now))
-              .toList();
-
-      for (final task in overdueTasks) {
-        notifications.add(
-          NotificationItem(
-            title: 'Overdue Task',
-            message:
-                '${task.title} was due ${DateFormat('MMM dd').format(task.endDate)}',
-            timestamp: DateTime.now().subtract(const Duration(hours: 5)),
-            type: NotificationType.taskOverdue,
-            isUnread: true,
-            relatedTaskId: task.id,
-          ),
-        );
-      }
-
-      // Recently completed tasks (as examples of read notifications)
-      final completedTasks =
-          tasks.where((task) => task.isCompleted).take(2).toList();
-
-      for (final task in completedTasks) {
-        notifications.add(
-          NotificationItem(
-            title: 'Task Completed',
-            message: 'You completed "${task.title}"',
-            timestamp: DateTime.now().subtract(const Duration(days: 1)),
-            type: NotificationType.taskCompleted,
-            isUnread: false,
-            relatedTaskId: task.id,
-          ),
-        );
-      }
-    }
-
-    // Sort notifications by timestamp (newest first)
-    notifications.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-
-    return notifications;
-  }
-}
-
-enum NotificationType {
-  taskReminder,
-  taskOverdue,
-  taskCompleted,
-  appUpdate,
-  systemMessage,
-}
-
-class NotificationItem {
-  final String title;
-  final String message;
-  final DateTime timestamp;
-  final NotificationType type;
-  final bool isUnread;
-  final String? relatedTaskId;
-
-  NotificationItem({
-    required this.title,
-    required this.message,
-    required this.timestamp,
-    required this.type,
-    this.isUnread = false,
-    this.relatedTaskId,
-  });
-
-  IconData getNotificationIcon() {
-    switch (type) {
-      case NotificationType.taskReminder:
-        return Icons.access_time;
-      case NotificationType.taskOverdue:
-        return Icons.warning_amber_rounded;
-      case NotificationType.taskCompleted:
-        return Icons.check_circle;
-      case NotificationType.appUpdate:
-        return Icons.system_update;
-      case NotificationType.systemMessage:
-        return Icons.notifications;
-    }
-  }
-
-  Color getIconBackgroundColor(bool isDarkMode) {
-    switch (type) {
-      case NotificationType.taskReminder:
-        return AppTheme.primaryColor;
-      case NotificationType.taskOverdue:
-        return AppTheme.accentRed;
-      case NotificationType.taskCompleted:
-        return AppTheme.accentGreen;
-      case NotificationType.appUpdate:
-        return AppTheme.accentBlue;
-      case NotificationType.systemMessage:
-        return isDarkMode
-            ? AppTheme.darkSecondaryTextColor
-            : AppTheme.lightSecondaryTextColor;
-    }
   }
 }

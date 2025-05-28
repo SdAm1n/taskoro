@@ -7,11 +7,13 @@ import '../utils/filter_debug_helper.dart';
 import 'firebase_task_service.dart';
 import 'firebase_user_service.dart';
 import 'auth_service.dart';
+import 'notification_provider.dart';
 
 class TaskProvider extends ChangeNotifier {
   final FirebaseTaskService _taskService = FirebaseTaskService();
   final FirebaseUserService _userService = FirebaseUserService();
   final AuthService _authService;
+  final NotificationProvider? _notificationProvider;
 
   // Current user and tasks
   AppUser _currentUser = AppUser.empty();
@@ -26,8 +28,11 @@ class TaskProvider extends ChangeNotifier {
   bool _disposed = false;
 
   // Constructor
-  TaskProvider({AuthService? authService})
-    : _authService = authService ?? AuthService() {
+  TaskProvider({
+    AuthService? authService,
+    NotificationProvider? notificationProvider,
+  }) : _authService = authService ?? AuthService(),
+       _notificationProvider = notificationProvider {
     _initializeProvider();
   }
 
@@ -184,6 +189,14 @@ class TaskProvider extends ChangeNotifier {
       ); // Debug log
 
       // The task will be automatically added to _tasks via the stream listener
+      // Generate notification for the newly created task (bypasses cooldown)
+      final notificationProvider = _notificationProvider;
+      if (notificationProvider != null) {
+        // Generate notification immediately for the new task
+        final createdTask = task.copyWith(id: taskId);
+        await notificationProvider.generateNotificationForNewTask(createdTask);
+      }
+
       return taskId;
     } catch (e) {
       debugPrint('TaskProvider: Error adding task: $e'); // Debug log
@@ -203,6 +216,11 @@ class TaskProvider extends ChangeNotifier {
 
       await _taskService.updateTask(updatedTask);
       // The task will be automatically updated in _tasks via the stream listener
+
+      // Don't automatically regenerate notifications on every update
+      // This was causing notifications to reappear after deletion/marking as read
+      // Notifications will be generated intelligently by NotificationProvider's cooldown system
+
       return true;
     } catch (e) {
       // Debug: Error updating task: $e
@@ -261,8 +279,18 @@ class TaskProvider extends ChangeNotifier {
   Future<bool> toggleTaskCompletion(String taskId) async {
     try {
       final task = _tasks.firstWhere((t) => t.id == taskId);
+      final wasCompleted = task.isCompleted;
       final updatedTask = task.copyWith(isCompleted: !task.isCompleted);
       await _taskService.updateTask(updatedTask);
+
+      // Generate notification when task is completed (not when reopened)
+      final notificationProvider = _notificationProvider;
+      if (!wasCompleted &&
+          updatedTask.isCompleted &&
+          notificationProvider != null) {
+        await notificationProvider.addTaskCompletedNotification(updatedTask);
+      }
+
       return true;
     } catch (e) {
       // Debug: Error toggling task completion: $e
@@ -402,6 +430,50 @@ class TaskProvider extends ChangeNotifier {
     } catch (e) {
       // Debug: Error removing team assignment: $e
       return false;
+    }
+  }
+
+  // Generate notifications for upcoming and overdue tasks
+  Future<void> generateTaskNotifications() async {
+    final notificationProvider = _notificationProvider;
+    if (notificationProvider != null) {
+      await notificationProvider.generateTaskNotifications(_tasks);
+    }
+  }
+
+  // Test method to create sample notifications for development/testing
+  Future<void> createSampleNotifications() async {
+    final notificationProvider = _notificationProvider;
+    if (notificationProvider != null) {
+      // Clear existing notifications first
+      await notificationProvider.clearAllNotifications();
+
+      // Create sample upcoming task notification
+      await notificationProvider.addCustomNotification(
+        title: 'Upcoming Task',
+        message: 'Complete project proposal due tomorrow',
+        type: NotificationType.taskReminder,
+        relatedTaskId: 'sample_task_1',
+      );
+
+      // Create sample overdue task notification
+      await notificationProvider.addCustomNotification(
+        title: 'Overdue Task',
+        message: 'Submit expense report was due yesterday',
+        type: NotificationType.taskOverdue,
+        relatedTaskId: 'sample_task_2',
+      );
+
+      // Create sample completed task notification
+      await notificationProvider.addCustomNotification(
+        title: 'Task Completed',
+        message: 'You completed "Review meeting notes"',
+        type: NotificationType.taskCompleted,
+        relatedTaskId: 'sample_task_3',
+        isUnread: false,
+      );
+
+      debugPrint('Sample notifications created for testing');
     }
   }
 

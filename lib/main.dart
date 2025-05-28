@@ -13,6 +13,7 @@ import 'services/language_provider.dart';
 import 'services/team_provider.dart';
 import 'services/auth_service.dart';
 import 'services/ai_task_service.dart';
+import 'services/notification_provider.dart';
 import 'theme/app_theme.dart';
 import 'utils/custom_page_route.dart';
 import 'package:flutter/services.dart';
@@ -41,13 +42,23 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => AuthService()),
-        ChangeNotifierProxyProvider<AuthService, TaskProvider>(
+        ChangeNotifierProvider(create: (context) => NotificationProvider()),
+        ChangeNotifierProxyProvider2<
+          AuthService,
+          NotificationProvider,
+          TaskProvider
+        >(
           create:
-              (context) =>
-                  TaskProvider(authService: context.read<AuthService>()),
+              (context) => TaskProvider(
+                authService: context.read<AuthService>(),
+                notificationProvider: context.read<NotificationProvider>(),
+              ),
           update:
-              (context, authService, previous) =>
-                  TaskProvider(authService: authService),
+              (context, authService, notificationProvider, previous) =>
+                  TaskProvider(
+                    authService: authService,
+                    notificationProvider: notificationProvider,
+                  ),
         ),
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
         ChangeNotifierProvider(
