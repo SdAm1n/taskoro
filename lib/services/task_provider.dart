@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/task.dart';
 import '../models/user.dart';
+import '../utils/filter_debug_helper.dart';
 import 'firebase_task_service.dart';
 import 'firebase_user_service.dart';
 import 'auth_service.dart';
@@ -99,6 +100,10 @@ class TaskProvider extends ChangeNotifier {
       if (_disposed) return;
 
       _tasks = tasks;
+
+      // Debug tasks when they are loaded
+      FilterDebugHelper.debugAllTasks(_tasks);
+
       notifyListeners();
     });
   }
@@ -161,6 +166,9 @@ class TaskProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
+      // Debug task creation
+      FilterDebugHelper.debugTaskCreation(task);
+
       // Add timeout to prevent hanging
       final taskId = await _taskService
           .createTask(task)
@@ -218,7 +226,9 @@ class TaskProvider extends ChangeNotifier {
       // Delete from Firebase
       await _taskService.deleteTask(taskId);
 
-      debugPrint('Waiting for stream to update after deletion of task $taskId...');
+      debugPrint(
+        'Waiting for stream to update after deletion of task $taskId...',
+      );
       // Wait for the stream listener to update _tasks by polling
       // with a reasonable timeout to avoid infinite waiting
       const maxWaitTime = Duration(seconds: 5);

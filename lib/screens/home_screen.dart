@@ -9,6 +9,7 @@ import '../widgets/ai_task_suggestions_widget.dart';
 import '../widgets/ai_chat_widget.dart';
 import '../widgets/voice_task_creation_widget.dart';
 import '../utils/task_deletion_state.dart';
+import '../utils/filter_debug_helper.dart';
 import '../localization/translation_helper.dart';
 import 'notifications_screen.dart';
 
@@ -53,6 +54,24 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  // Helper method to get filter name for debugging
+  String _getFilterName(int index) {
+    switch (index) {
+      case 0:
+        return 'All';
+      case 1:
+        return 'Today';
+      case 2:
+        return 'Upcoming';
+      case 3:
+        return 'Team Tasks';
+      case 4:
+        return 'Completed';
+      default:
+        return 'Unknown';
+    }
+  }
+
   void _updateFilteredTasks() {
     final taskProvider = Provider.of<TaskProvider>(context, listen: false);
 
@@ -74,19 +93,23 @@ class _HomeScreenState extends State<HomeScreen> {
                       task.endDate.difference(DateTime.now()).inDays <= 7;
                 }).toList();
             break;
-          case 3: // Personal
+          case 3: // Team Tasks
             _filteredTasks =
-                taskProvider.tasks.where((task) => !task.isTeamTask).toList();
+                taskProvider.teamTasks; // Use provider getter for consistency
             break;
-          case 4: // Team Tasks
-            _filteredTasks =
-                taskProvider.tasks.where((task) => task.isTeamTask).toList();
-            break;
-          case 5: // Completed
+          case 4: // Completed
             _filteredTasks = taskProvider.completedTasks;
             break;
         }
       }
+
+      // Debug filter results
+      FilterDebugHelper.debugFilterResults(
+        _getFilterName(_selectedIndex),
+        _selectedIndex,
+        taskProvider.tasks,
+        _filteredTasks,
+      );
     });
   }
 
@@ -109,19 +132,23 @@ class _HomeScreenState extends State<HomeScreen> {
                       task.endDate.difference(DateTime.now()).inDays <= 7;
                 }).toList();
             break;
-          case 3: // Personal
+          case 3: // Team Tasks
             _filteredTasks =
-                taskProvider.tasks.where((task) => !task.isTeamTask).toList();
+                taskProvider.teamTasks; // Use provider getter for consistency
             break;
-          case 4: // Team Tasks
-            _filteredTasks =
-                taskProvider.tasks.where((task) => task.isTeamTask).toList();
-            break;
-          case 5: // Completed
+          case 4: // Completed
             _filteredTasks = taskProvider.completedTasks;
             break;
         }
       }
+
+      // Debug filter results
+      FilterDebugHelper.debugFilterResults(
+        _getFilterName(_selectedIndex),
+        _selectedIndex,
+        taskProvider.tasks,
+        _filteredTasks,
+      );
     });
   }
 
@@ -952,16 +979,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                             2,
                                           ),
                                           _buildFilterChip(
-                                            context.tr('personal_tasks'),
+                                            context.tr('team_tasks'),
                                             3,
                                           ),
                                           _buildFilterChip(
-                                            context.tr('team_tasks'),
-                                            4,
-                                          ),
-                                          _buildFilterChip(
                                             context.tr('completed'),
-                                            5,
+                                            4,
                                           ),
                                         ],
                                       ),
@@ -1193,7 +1216,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            _selectedIndex == 3
+            _selectedIndex == 4
                 ? context.tr('no_completed_tasks')
                 : _searchQuery.isNotEmpty
                 ? context.tr('no_search_results')
