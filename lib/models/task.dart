@@ -15,6 +15,10 @@ class Task {
   final List<String>? subtasks;
   final String? assignedTeamId;
   final List<String>? assignedMemberIds;
+  final double? latitude;
+  final double? longitude;
+  final String? locationName;
+  final String? locationAddress;
 
   Task({
     required this.id,
@@ -29,6 +33,10 @@ class Task {
     this.subtasks,
     this.assignedTeamId,
     this.assignedMemberIds,
+    this.latitude,
+    this.longitude,
+    this.locationName,
+    this.locationAddress,
   });
 
   Task copyWith({
@@ -44,6 +52,10 @@ class Task {
     List<String>? subtasks,
     String? assignedTeamId,
     List<String>? assignedMemberIds,
+    double? latitude,
+    double? longitude,
+    String? locationName,
+    String? locationAddress,
   }) {
     return Task(
       id: id ?? this.id,
@@ -58,6 +70,10 @@ class Task {
       subtasks: subtasks ?? this.subtasks,
       assignedTeamId: assignedTeamId ?? this.assignedTeamId,
       assignedMemberIds: assignedMemberIds ?? this.assignedMemberIds,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      locationName: locationName ?? this.locationName,
+      locationAddress: locationAddress ?? this.locationAddress,
     );
   }
 
@@ -76,6 +92,10 @@ class Task {
       'subtasks': subtasks,
       'assignedTeamId': assignedTeamId,
       'assignedMemberIds': assignedMemberIds,
+      'latitude': latitude,
+      'longitude': longitude,
+      'locationName': locationName,
+      'locationAddress': locationAddress,
     };
   }
 
@@ -104,6 +124,10 @@ class Task {
           map['assignedMemberIds'] != null
               ? List<String>.from(map['assignedMemberIds'])
               : null,
+      latitude: map['latitude']?.toDouble(),
+      longitude: map['longitude']?.toDouble(),
+      locationName: map['locationName'],
+      locationAddress: map['locationAddress'],
     );
   }
 
@@ -147,4 +171,20 @@ class Task {
   // Helper method to check if task is assigned to a specific member
   bool isAssignedToMember(String memberId) =>
       assignedMemberIds?.contains(memberId) ?? false;
+
+  // Helper method to check if task has location
+  bool get hasLocation => latitude != null && longitude != null;
+
+  // Helper method to get formatted location
+  String get formattedLocation {
+    if (locationName != null && locationName!.isNotEmpty) {
+      return locationName!;
+    } else if (locationAddress != null && locationAddress!.isNotEmpty) {
+      return locationAddress!;
+    } else if (hasLocation) {
+      return '${latitude!.toStringAsFixed(6)}, ${longitude!.toStringAsFixed(6)}';
+    } else {
+      return 'No location set';
+    }
+  }
 }

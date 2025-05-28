@@ -115,6 +115,12 @@ class TaskCard extends StatelessWidget {
                 _buildTeamAssignmentInfo(context),
               ],
 
+              // Location information
+              if (task.hasLocation) ...[
+                const SizedBox(height: 8),
+                _buildLocationInfo(context),
+              ],
+
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -264,6 +270,41 @@ class TaskCard extends StatelessWidget {
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: AppTheme.primaryColor,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLocationInfo(BuildContext context) {
+    if (!task.hasLocation) return const SizedBox();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppTheme.accentGreen.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: AppTheme.accentGreen.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.location_on, size: 14, color: AppTheme.accentGreen),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              task.formattedLocation,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.accentGreen,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

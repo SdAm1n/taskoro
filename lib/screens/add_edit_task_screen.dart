@@ -9,6 +9,7 @@ import '../theme/app_theme.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
+import '../widgets/location_picker.dart';
 import '../localization/translation_helper.dart';
 
 class AddEditTaskScreen extends StatefulWidget {
@@ -33,6 +34,12 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   String? _selectedTeamId;
   List<String> _selectedMemberIds = [];
   bool _isSaving = false;
+
+  // Location-related variables
+  double? _selectedLatitude;
+  double? _selectedLongitude;
+  String? _selectedLocationName;
+  String? _selectedLocationAddress;
 
   bool get isEditing => widget.task != null;
 
@@ -60,6 +67,12 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
     _selectedCategory = widget.task?.category ?? TaskCategory.personal;
     _selectedTeamId = widget.task?.assignedTeamId ?? widget.preSelectedTeamId;
     _selectedMemberIds = widget.task?.assignedMemberIds ?? [];
+
+    // Initialize location variables
+    _selectedLatitude = widget.task?.latitude;
+    _selectedLongitude = widget.task?.longitude;
+    _selectedLocationName = widget.task?.locationName;
+    _selectedLocationAddress = widget.task?.locationAddress;
   }
 
   @override
@@ -90,6 +103,10 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
         assignedTeamId: _selectedTeamId,
         assignedMemberIds:
             _selectedMemberIds.isNotEmpty ? _selectedMemberIds : null,
+        latitude: _selectedLatitude,
+        longitude: _selectedLongitude,
+        locationName: _selectedLocationName,
+        locationAddress: _selectedLocationAddress,
       );
 
       try {
@@ -510,6 +527,11 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                 ),
                 const SizedBox(height: 8),
                 _buildTeamAssignmentSection(),
+
+                const SizedBox(height: 24),
+
+                // Location Section
+                _buildLocationSection(),
 
                 const SizedBox(height: 40),
 
@@ -1039,5 +1061,219 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                 ),
           ),
     );
+  }
+
+  Widget _buildLocationSection() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final hasLocation = _selectedLatitude != null && _selectedLongitude != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Location', style: Theme.of(context).textTheme.bodyLarge),
+        const SizedBox(height: 8),
+
+        if (hasLocation) ...[
+          // Show current location info
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color:
+                  isDarkMode
+                      ? AppTheme.darkSurfaceColor
+                      : AppTheme.lightSurfaceColor,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppTheme.primaryColor, width: 1.5),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.location_on,
+                      color: AppTheme.primaryColor,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _selectedLocationName ?? 'Selected Location',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                if (_selectedLocationAddress != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    _selectedLocationAddress!,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color:
+                          isDarkMode
+                              ? AppTheme.darkSecondaryTextColor
+                              : AppTheme.lightSecondaryTextColor,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _showLocationPicker,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.primaryColor,
+                          side: BorderSide(color: AppTheme.primaryColor),
+                        ),
+                        child: const Text('Change Location'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _clearLocation,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.accentRed,
+                          side: BorderSide(color: AppTheme.accentRed),
+                        ),
+                        child: const Text('Remove'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ] else ...[
+          // Show add location button
+          GestureDetector(
+            onTap: _showLocationPicker,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color:
+                    isDarkMode
+                        ? AppTheme.darkSurfaceColor
+                        : AppTheme.lightSurfaceColor,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.transparent, width: 1.5),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Add Location (Optional)',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color:
+                          isDarkMode
+                              ? AppTheme.darkSecondaryTextColor
+                              : AppTheme.lightSecondaryTextColor,
+                    ),
+                  ),
+                  Icon(
+                    Icons.add_location,
+                    size: 20,
+                    color:
+                        isDarkMode
+                            ? AppTheme.darkSecondaryTextColor
+                            : AppTheme.lightSecondaryTextColor,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  void _showLocationPicker() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder:
+          (context) => Container(
+            height: MediaQuery.of(context).size.height * 0.85,
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).primaryColor.withValues(alpha: 0.1),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Select Location',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+                // Location Picker in modal mode
+                Expanded(
+                  child: LocationPicker(
+                    isModal: true,
+                    initialLocation:
+                        _selectedLatitude != null && _selectedLongitude != null
+                            ? LocationData(
+                              latitude: _selectedLatitude!,
+                              longitude: _selectedLongitude!,
+                              name: _selectedLocationName,
+                              address: _selectedLocationAddress,
+                            )
+                            : null,
+                    onLocationSelected: (locationData) {
+                      setState(() {
+                        _selectedLatitude = locationData.latitude;
+                        _selectedLongitude = locationData.longitude;
+                        _selectedLocationName = locationData.name;
+                        _selectedLocationAddress = locationData.address;
+                      });
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+    );
+  }
+
+  void _clearLocation() {
+    setState(() {
+      _selectedLatitude = null;
+      _selectedLongitude = null;
+      _selectedLocationName = null;
+      _selectedLocationAddress = null;
+    });
   }
 }
