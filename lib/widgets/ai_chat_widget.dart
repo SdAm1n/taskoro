@@ -472,10 +472,10 @@ class _AIChatWidgetState extends State<AIChatWidget> {
 
     try {
       // Run the simple speech test first
-      print('=== STARTING SIMPLE SPEECH TEST ===');
+      // print('=== STARTING SIMPLE SPEECH TEST ===');
       final simpleResult = await aiTaskService.speechService.testSimpleListen();
 
-      print('=== SIMPLE TEST RESULT: "$simpleResult" ===');
+      // print('=== SIMPLE TEST RESULT: "$simpleResult" ===');
 
       // Also run the comprehensive test for comparison
       await aiTaskService.speechService.testBasicSpeech();
@@ -499,7 +499,7 @@ class _AIChatWidgetState extends State<AIChatWidget> {
       if (!mounted) return;
       Navigator.of(context).pop();
 
-      print('DEBUG SPEECH TEST ERROR: $e');
+      // print('DEBUG SPEECH TEST ERROR: $e');
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text('Speech debug test failed: $e'),

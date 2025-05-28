@@ -77,25 +77,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
     setState(() {
       if (_searchQuery.isNotEmpty) {
-        _filteredTasks = taskProvider.searchTasks(_searchQuery);
+        _filteredTasks =
+            taskProvider
+                .searchTasks(_searchQuery)
+                .where((task) => !task.isCompleted)
+                .toList(); // Exclude completed from search
       } else {
         switch (_selectedIndex) {
           case 0: // All
-            _filteredTasks = taskProvider.tasks;
+            _filteredTasks =
+                taskProvider.pendingTasks; // Exclude completed tasks
             break;
           case 1: // Today
-            _filteredTasks = taskProvider.getTasksForDate(DateTime.now());
+            _filteredTasks =
+                taskProvider
+                    .getTasksForDate(DateTime.now())
+                    .where((task) => !task.isCompleted)
+                    .toList(); // Exclude completed
             break;
           case 2: // Upcoming
             _filteredTasks =
                 taskProvider.tasks.where((task) {
-                  return task.endDate.isAfter(DateTime.now()) &&
+                  return !task.isCompleted && // Exclude completed tasks
+                      task.endDate.isAfter(DateTime.now()) &&
                       task.endDate.difference(DateTime.now()).inDays <= 7;
                 }).toList();
             break;
           case 3: // Team Tasks
             _filteredTasks =
-                taskProvider.teamTasks; // Use provider getter for consistency
+                taskProvider.teamTasks
+                    .where((task) => !task.isCompleted)
+                    .toList(); // Exclude completed
             break;
           case 4: // Completed
             _filteredTasks = taskProvider.completedTasks;
@@ -116,25 +128,37 @@ class _HomeScreenState extends State<HomeScreen> {
   void _updateFilteredTasksWithProvider(TaskProvider taskProvider) {
     setState(() {
       if (_searchQuery.isNotEmpty) {
-        _filteredTasks = taskProvider.searchTasks(_searchQuery);
+        _filteredTasks =
+            taskProvider
+                .searchTasks(_searchQuery)
+                .where((task) => !task.isCompleted)
+                .toList(); // Exclude completed from search
       } else {
         switch (_selectedIndex) {
           case 0: // All
-            _filteredTasks = taskProvider.tasks;
+            _filteredTasks =
+                taskProvider.pendingTasks; // Exclude completed tasks
             break;
           case 1: // Today
-            _filteredTasks = taskProvider.getTasksForDate(DateTime.now());
+            _filteredTasks =
+                taskProvider
+                    .getTasksForDate(DateTime.now())
+                    .where((task) => !task.isCompleted)
+                    .toList(); // Exclude completed
             break;
           case 2: // Upcoming
             _filteredTasks =
                 taskProvider.tasks.where((task) {
-                  return task.endDate.isAfter(DateTime.now()) &&
+                  return !task.isCompleted && // Exclude completed tasks
+                      task.endDate.isAfter(DateTime.now()) &&
                       task.endDate.difference(DateTime.now()).inDays <= 7;
                 }).toList();
             break;
           case 3: // Team Tasks
             _filteredTasks =
-                taskProvider.teamTasks; // Use provider getter for consistency
+                taskProvider.teamTasks
+                    .where((task) => !task.isCompleted)
+                    .toList(); // Exclude completed
             break;
           case 4: // Completed
             _filteredTasks = taskProvider.completedTasks;
