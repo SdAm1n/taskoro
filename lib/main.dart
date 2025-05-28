@@ -40,7 +40,14 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => AuthService()),
-        ChangeNotifierProvider(create: (context) => TaskProvider()),
+        ChangeNotifierProxyProvider<AuthService, TaskProvider>(
+          create:
+              (context) =>
+                  TaskProvider(authService: context.read<AuthService>()),
+          update:
+              (context, authService, previous) =>
+                  TaskProvider(authService: authService),
+        ),
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
         ChangeNotifierProvider(
           create: (context) => LanguageProvider()..initLanguage(),

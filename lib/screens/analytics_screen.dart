@@ -36,7 +36,10 @@ class AnalyticsScreen extends StatelessWidget {
           isDarkMode
               ? AppTheme.darkBackgroundColor
               : AppTheme.lightBackgroundColor,
-      appBar: CustomAppBar(title: context.tr('analytics')),
+      appBar: CustomAppBar(
+        title: context.tr('analytics'),
+        automaticallyImplyLeading: false,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -293,7 +296,10 @@ class AnalyticsScreen extends StatelessWidget {
         ),
         Text(
           label,
-          style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 14),
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.8),
+            fontSize: 14,
+          ),
         ),
       ],
     );

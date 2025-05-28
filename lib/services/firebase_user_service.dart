@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:rxdart/rxdart.dart';
 import '../models/user.dart';
 
 class FirebaseUserService {
@@ -48,15 +49,20 @@ class FirebaseUserService {
 
   // Stream of current user profile
   Stream<AppUser?> getCurrentUserProfileStream() {
-    if (_currentUserId == null) return Stream.value(null);
-
-    return _usersCollection.doc(_currentUserId).snapshots().map((doc) {
-      if (doc.exists) {
-        final data = doc.data() as Map<String, dynamic>;
-        data['id'] = doc.id;
-        return AppUser.fromMap(data);
+    // Listen to auth state changes and switch streams accordingly
+    return _auth.authStateChanges().switchMap((firebaseUser) {
+      if (firebaseUser == null) {
+        return Stream.value(null);
       }
-      return null;
+
+      return _usersCollection.doc(firebaseUser.uid).snapshots().map((doc) {
+        if (doc.exists) {
+          final data = doc.data() as Map<String, dynamic>;
+          data['id'] = doc.id;
+          return AppUser.fromMap(data);
+        }
+        return null;
+      });
     });
   }
 

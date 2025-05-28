@@ -1,26 +1,32 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/task.dart';
 import '../models/user.dart';
 import 'firebase_task_service.dart';
 import 'firebase_user_service.dart';
+import 'auth_service.dart';
 
 class TaskProvider extends ChangeNotifier {
   final FirebaseTaskService _taskService = FirebaseTaskService();
   final FirebaseUserService _userService = FirebaseUserService();
+  final AuthService _authService;
 
   // Current user and tasks
   AppUser _currentUser = AppUser.empty();
   List<Task> _tasks = [];
   StreamSubscription<List<Task>>? _tasksSubscription;
   StreamSubscription<AppUser?>? _userSubscription;
+  StreamSubscription<User?>? _authSubscription;
 
   // Loading states
   bool _isLoading = false;
   bool _isInitialized = false;
+  bool _disposed = false;
 
   // Constructor
-  TaskProvider() {
+  TaskProvider({AuthService? authService})
+    : _authService = authService ?? AuthService() {
     _initializeProvider();
   }
 
@@ -30,15 +36,22 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Listen to user profile changes
-      _userSubscription = _userService.getCurrentUserProfileStream().listen((
-        user,
-      ) {
-        if (user != null) {
-          _currentUser = user;
-          _setupTasksListener();
+      // Listen to auth state changes first
+      _authSubscription = _authService.authStateChanges.listen((firebaseUser) {
+        // Check if provider is disposed before processing auth changes
+        if (_disposed) return;
+
+        if (firebaseUser != null) {
+          // User is authenticated, start listening to user profile
+          _setupUserProfileListener();
+        } else {
+          // User is not authenticated, reset state
+          _currentUser = AppUser.empty();
+          _tasks = [];
+          _userSubscription?.cancel();
+          _tasksSubscription?.cancel();
+          notifyListeners();
         }
-        notifyListeners();
       });
 
       _isInitialized = true;
@@ -50,10 +63,41 @@ class TaskProvider extends ChangeNotifier {
     }
   }
 
+  // Setup user profile listener
+  void _setupUserProfileListener() {
+    _userSubscription?.cancel();
+
+    _userSubscription = _userService.getCurrentUserProfileStream().listen((
+      user,
+    ) {
+      // Check if provider is disposed before notifying listeners
+      if (_disposed) return;
+
+      if (user != null) {
+        _currentUser = user;
+        _setupTasksListener();
+      } else {
+        // User document doesn't exist yet, create fallback from auth
+        final authUser = _authService.currentUser;
+        if (authUser != null) {
+          _currentUser = authUser;
+          // Try to create the user document in Firestore
+          _userService.createOrUpdateUser(authUser).catchError((_) {
+            // Ignore errors, the document will be created eventually
+          });
+        }
+      }
+      notifyListeners();
+    });
+  }
+
   // Setup Firebase listener for tasks
   void _setupTasksListener() {
     _tasksSubscription?.cancel();
     _tasksSubscription = _taskService.getUserTasks().listen((tasks) {
+      // Check if provider is disposed before notifying listeners
+      if (_disposed) return;
+
       _tasks = tasks;
       notifyListeners();
     });
@@ -237,9 +281,31 @@ class TaskProvider extends ChangeNotifier {
   }
 
   // Update user information
-  void updateUser(AppUser updatedUser) {
-    _currentUser = updatedUser;
-    notifyListeners();
+  Future<void> updateUser(AppUser updatedUser) async {
+    try {
+      print(
+        'TaskProvider: Starting user update for ${updatedUser.displayName}',
+      );
+
+      // Update Firebase Auth profile (only displayName, not email)
+      print('TaskProvider: Updating Firebase Auth profile...');
+      await _authService.updateProfile(displayName: updatedUser.displayName);
+      print('TaskProvider: Firebase Auth profile updated successfully');
+
+      // Update Firestore user profile
+      print('TaskProvider: Updating Firestore user profile...');
+      await _userService.updateUserProfile(updatedUser);
+      print('TaskProvider: Firestore user profile updated successfully');
+
+      // Update local state
+      _currentUser = updatedUser;
+      notifyListeners();
+      print('TaskProvider: User update completed successfully');
+    } catch (e) {
+      print('TaskProvider: Error updating user: $e');
+      // Re-throw the error so the UI can handle it
+      rethrow;
+    }
   }
 
   // Team-related task methods
@@ -331,6 +397,8 @@ class TaskProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
+    _authSubscription?.cancel();
     _tasksSubscription?.cancel();
     _userSubscription?.cancel();
     super.dispose();

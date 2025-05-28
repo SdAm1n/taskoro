@@ -43,7 +43,10 @@ class _TeamsScreenState extends State<TeamsScreen> {
           isDarkMode
               ? AppTheme.darkBackgroundColor
               : AppTheme.lightBackgroundColor,
-      appBar: CustomAppBar(title: context.tr('teams')),
+      appBar: CustomAppBar(
+        title: context.tr('teams'),
+        automaticallyImplyLeading: false,
+      ),
       body: RefreshIndicator(
         onRefresh: () async {
           // In a real app, this would fetch teams from the server

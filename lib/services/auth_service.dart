@@ -19,11 +19,8 @@ class AuthService extends ChangeNotifier {
   AppUser? _userFromFirebase(User? user) {
     if (user == null) return null;
 
-    // Get username/display name with fallback logic
-    String username =
-        user.displayName ??
-        user.email?.split('@').first ??
-        'user${user.uid.substring(0, 6)}';
+    // Get username/display name with improved fallback logic
+    String username = user.displayName ?? 'user${user.uid.substring(0, 6)}';
 
     return AppUser(
       id: user.uid,
@@ -47,11 +44,27 @@ class AuthService extends ChangeNotifier {
         email: email,
         password: password,
       );
-      final user = _userFromFirebase(result.user);
 
-      // Create or update user profile in Firestore (in case it doesn't exist)
-      if (user != null) {
-        await _userService.createOrUpdateUser(user);
+      // First, check if user profile already exists in Firestore
+      AppUser? existingUser;
+      if (result.user != null) {
+        try {
+          existingUser = await _userService.getUserProfile(result.user!.uid);
+        } catch (e) {
+          // Failed to get existing profile, will create new one
+        }
+      }
+
+      AppUser? user;
+      if (existingUser != null) {
+        // Use existing profile from Firestore (preserves original username)
+        user = existingUser;
+      } else {
+        // Create new profile for first-time login
+        user = _userFromFirebase(result.user);
+        if (user != null) {
+          await _userService.createOrUpdateUser(user);
+        }
       }
 
       notifyListeners(); // Notify listeners of auth state change
@@ -61,9 +74,18 @@ class AuthService extends ChangeNotifier {
     } catch (e) {
       // Log the error but don't throw if the user was actually created
       if (_auth.currentUser != null) {
-        final user = _userFromFirebase(_auth.currentUser);
-        // Try to create/update profile even if there was an error
-        if (user != null) {
+        // Try to get existing profile first
+        AppUser? existingUser;
+        try {
+          existingUser = await _userService.getUserProfile(
+            _auth.currentUser!.uid,
+          );
+        } catch (_) {}
+
+        final user = existingUser ?? _userFromFirebase(_auth.currentUser);
+
+        // Try to create/update profile only if no existing profile
+        if (user != null && existingUser == null) {
           try {
             await _userService.createOrUpdateUser(user);
           } catch (_) {
@@ -93,18 +115,24 @@ class AuthService extends ChangeNotifier {
       await result.user?.updateDisplayName(username);
       await result.user?.reload();
 
-      // Get the updated user
-      final updatedUser = _auth.currentUser;
-      final user = _userFromFirebase(updatedUser);
-
       // Create user profile in Firestore with the username as displayName
-      if (user != null) {
-        final userWithUsername = user.copyWith(displayName: username);
-        await _userService.createOrUpdateUser(userWithUsername);
-      }
+      // Don't rely on _userFromFirebase here since it might fall back to email prefix
+      final user = AppUser(
+        id: result.user!.uid,
+        email: result.user!.email ?? '',
+        displayName: username, // Use the provided username directly
+        photoUrl: result.user?.photoURL,
+        createdAt: result.user!.metadata.creationTime ?? DateTime.now(),
+      );
+
+      // Create user profile in Firestore immediately
+      await _userService.createOrUpdateUser(user);
+
+      // Small delay to ensure Firestore document is available
+      await Future.delayed(const Duration(milliseconds: 100));
 
       notifyListeners(); // Notify listeners of auth state change
-      return user?.copyWith(displayName: username);
+      return user;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {
@@ -116,6 +144,9 @@ class AuthService extends ChangeNotifier {
           try {
             final userWithUsername = user.copyWith(displayName: username);
             await _userService.createOrUpdateUser(userWithUsername);
+            // Small delay for Firestore
+            await Future.delayed(const Duration(milliseconds: 100));
+            return userWithUsername;
           } catch (_) {
             // Profile creation failed, but continue
           }
@@ -152,17 +183,34 @@ class AuthService extends ChangeNotifier {
       final UserCredential result = await _auth.signInWithCredential(
         credential,
       );
-      final user = _userFromFirebase(result.user);
 
-      // Create or update user profile in Firestore with proper display name
-      if (user != null) {
-        // For Google sign-in, use the Google display name
-        final properDisplayName =
-            result.user?.displayName ?? user.email.split('@').first;
-        final userWithCorrectName = user.copyWith(
-          displayName: properDisplayName,
-        );
-        await _userService.createOrUpdateUser(userWithCorrectName);
+      // First, check if user profile already exists in Firestore
+      AppUser? existingUser;
+      if (result.user != null) {
+        try {
+          existingUser = await _userService.getUserProfile(result.user!.uid);
+        } catch (e) {
+          // Failed to get existing profile, will create new one
+        }
+      }
+
+      AppUser? user;
+      if (existingUser != null) {
+        // Use existing profile from Firestore (preserves original username)
+        user = existingUser;
+      } else {
+        // Create new profile for first-time Google sign-in
+        user = _userFromFirebase(result.user);
+        if (user != null) {
+          // For Google sign-in, use the Google display name or email prefix as fallback
+          final properDisplayName =
+              result.user?.displayName ?? user.email.split('@').first;
+          final userWithCorrectName = user.copyWith(
+            displayName: properDisplayName,
+          );
+          await _userService.createOrUpdateUser(userWithCorrectName);
+          user = userWithCorrectName;
+        }
       }
 
       notifyListeners(); // Notify listeners of auth state change
@@ -170,8 +218,16 @@ class AuthService extends ChangeNotifier {
     } catch (e) {
       // Log the error but don't throw if the user was actually signed in
       if (_auth.currentUser != null) {
+        // Try to get existing profile first
+        AppUser? existingUser;
+        try {
+          existingUser = await _userService.getUserProfile(
+            _auth.currentUser!.uid,
+          );
+        } catch (_) {}
+
         notifyListeners();
-        return _userFromFirebase(_auth.currentUser);
+        return existingUser ?? _userFromFirebase(_auth.currentUser);
       }
       throw 'Google sign-in failed. Please try again.';
     }
@@ -221,6 +277,34 @@ class AuthService extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       throw 'Failed to update profile. Please try again.';
+    }
+  }
+
+  // Change user password
+  Future<void> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw 'No user signed in';
+
+      // Re-authenticate user with current password
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+
+      // Update password
+      await user.updatePassword(newPassword);
+
+      notifyListeners();
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw 'Failed to change password. Please try again.';
     }
   }
 

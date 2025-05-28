@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/task_provider.dart';
+import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_button.dart';
@@ -43,30 +44,61 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  void _saveProfile() {
+  void _saveProfile() async {
     if (_formKey.currentState!.validate()) {
       final taskProvider = Provider.of<TaskProvider>(context, listen: false);
       final currentUser = taskProvider.currentUser;
 
-      // Create updated user with new username and email
-      final updatedUser = currentUser.copyWith(
-        displayName: _usernameController.text.trim(),
-        email: _emailController.text.trim(),
-      );
+      try {
+        // Show loading indicator
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder:
+              (context) => const Center(child: CircularProgressIndicator()),
+        );
 
-      // Update the user in the provider
-      taskProvider.updateUser(updatedUser);
+        // Create updated user with new username (keep original email)
+        final updatedUser = currentUser.copyWith(
+          displayName: _usernameController.text.trim(),
+          // Don't update email - keep original
+        );
 
-      // Go back to settings screen
-      Navigator.pop(context);
+        // Update user using TaskProvider (which handles Firebase Auth and Firestore)
+        await taskProvider.updateUser(updatedUser);
 
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile updated successfully'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+        // Close loading dialog
+        if (mounted) Navigator.of(context).pop();
+
+        // Go back to settings screen
+        if (mounted) Navigator.pop(context);
+
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile updated successfully'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } catch (e) {
+        print('Edit Profile Error: $e'); // Debug log
+
+        // Close loading dialog
+        if (mounted) Navigator.of(context).pop();
+
+        // Show detailed error message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to update profile: ${e.toString()}'),
+              duration: const Duration(seconds: 4),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -154,17 +186,55 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 if (passwordFormKey.currentState!.validate()) {
-                  // In a real app, you would update the password in your auth system
-                  // For this demo app, we'll just show a success message
-                  Navigator.of(dialogContext).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Password changed successfully'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
+                  try {
+                    // Show loading indicator
+                    showDialog(
+                      context: dialogContext,
+                      barrierDismissible: false,
+                      builder:
+                          (context) =>
+                              const Center(child: CircularProgressIndicator()),
+                    );
+
+                    // Change password using AuthService
+                    final authService = AuthService();
+                    await authService.changePassword(
+                      _currentPasswordController.text,
+                      _newPasswordController.text,
+                    );
+
+                    // Close loading dialog
+                    if (mounted) Navigator.of(dialogContext).pop();
+
+                    // Close password dialog
+                    if (mounted) Navigator.of(dialogContext).pop();
+
+                    // Show success message
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Password changed successfully'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    // Close loading dialog
+                    if (mounted) Navigator.of(dialogContext).pop();
+
+                    // Show error message
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Failed to change password: $e'),
+                          duration: const Duration(seconds: 3),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
                 }
               },
               child: Text(
@@ -277,7 +347,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 20),
 
-              // Email field
+              // Email field (read-only)
               Text('Email', style: Theme.of(context).textTheme.bodyLarge),
               const SizedBox(height: 8),
               CustomTextField(
@@ -285,6 +355,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 hintText: 'Your email',
                 prefixIcon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
+                enabled: false, // Make email field read-only
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your email';

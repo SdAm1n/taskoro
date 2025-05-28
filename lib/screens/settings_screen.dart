@@ -99,7 +99,10 @@ class SettingsScreen extends StatelessWidget {
           isDarkMode
               ? AppTheme.darkBackgroundColor
               : AppTheme.lightBackgroundColor,
-      appBar: CustomAppBar(title: context.tr('settings')),
+      appBar: CustomAppBar(
+        title: context.tr('settings'),
+        automaticallyImplyLeading: false,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
