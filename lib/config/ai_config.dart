@@ -2,7 +2,7 @@
 class AIConfig {
   // Gemini API Configuration
   static const String geminiApiKey = 'AIzaSyDd8KLWSo1b73s76hK3hMIdcvclF32dYrc';
-  static const String geminiModel = 'gemini-pro';
+  static const String geminiModel = 'gemini-1.5-flash';
 
   // Ollama Local AI Configuration (fallback)
   static const String ollamaBaseUrl = 'http://localhost:11434';

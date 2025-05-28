@@ -5,14 +5,17 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 
 class AIService {
   static const String _geminiApiKey =
-      'AIzaSyAM6kjJ8A-kLipJq2EV2RSWqV6ohhLzkkA'; // Using your existing Google API key
+      'AIzaSyAM6kjJ8A-kLipJq2EV2RSWqV6ohhLzkkA'; // Main Gemini API key for AI features
   static const String _ollamaBaseUrl =
       'http://localhost:11434/api'; // Local Ollama instance
 
   late final GenerativeModel _geminiModel;
 
   AIService() {
-    _geminiModel = GenerativeModel(model: 'gemini-pro', apiKey: _geminiApiKey);
+    _geminiModel = GenerativeModel(
+      model: 'gemini-1.5-flash',
+      apiKey: _geminiApiKey,
+    );
   }
 
   /// Generate detailed task description from title using AI

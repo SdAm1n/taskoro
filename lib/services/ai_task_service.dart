@@ -317,6 +317,47 @@ class AITaskService extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Check if the message is a task creation request
+      final lowerMessage = message.toLowerCase();
+      final isTaskCreationRequest = lowerMessage.contains('create') ||
+          lowerMessage.contains('add') ||
+          lowerMessage.contains('new task') ||
+          lowerMessage.contains('make a task') ||
+          lowerMessage.contains('remind me') ||
+          lowerMessage.contains('schedule');
+
+      if (isTaskCreationRequest && userId != null) {
+        try {
+          // Try to create a task from the message
+          final createdTask = await createTaskFromText(
+            input: message,
+            userId: userId,
+          );
+
+          if (createdTask != null) {
+            _lastAIResponse = 
+                "Perfect! I've created the task '${createdTask.title}' for you.\n\n"
+                "📋 **Task Details:**\n"
+                "• **Title:** ${createdTask.title}\n"
+                "• **Description:** ${createdTask.description.isNotEmpty ? createdTask.description : 'No description'}\n"
+                "• **Priority:** ${_capitalizeString(createdTask.priority.toString().split('.').last)}\n"
+                "• **Category:** ${_capitalizeString(createdTask.category.toString().split('.').last)}\n"
+                "• **Due Date:** ${createdTask.endDate.day}/${createdTask.endDate.month}/${createdTask.endDate.year}\n\n"
+                "The task has been saved to your task list! Is there anything else you'd like me to help you with?";
+            notifyListeners();
+            return _lastAIResponse;
+          } else {
+            // Fall back to conversational AI if task creation failed
+            debugPrint('Task creation failed, falling back to conversational AI');
+          }
+        } catch (e) {
+          debugPrint('Task creation from chat failed: $e');
+          // Fall back to conversational AI if task creation failed
+        }
+      }
+
+      // For non-task-creation requests or if task creation failed, 
+      // provide conversational AI response
       Map<String, dynamic>? context;
 
       if (userId != null) {
@@ -649,5 +690,11 @@ class AITaskService extends ChangeNotifier {
       debugPrint('Voice complete task error: $e');
       await _speechService.speak("Sorry, I couldn't complete that task.");
     }
+  }
+
+  // Helper method to capitalize strings
+  String _capitalizeString(String input) {
+    if (input.isEmpty) return input;
+    return input[0].toUpperCase() + input.substring(1).toLowerCase();
   }
 }
