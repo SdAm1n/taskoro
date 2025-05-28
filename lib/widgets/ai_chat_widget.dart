@@ -77,16 +77,20 @@ class _AIChatWidgetState extends State<AIChatWidget> {
     );
     _addMessage(typingMessage);
 
+    // Get services before async operations
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final aiTaskService = Provider.of<AITaskService>(context, listen: false);
+    final userId = authService.currentUser?.id;
+
     // Get AI response
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      final userId = authService.currentUser?.id;
-
-      final aiTaskService = Provider.of<AITaskService>(context, listen: false);
       final response = await aiTaskService.chatWithAI(
         message.text,
         userId: userId,
       );
+
+      // Check if widget is still mounted before updating UI
+      if (!mounted) return;
 
       // Remove typing indicator
       setState(() {
@@ -102,6 +106,9 @@ class _AIChatWidgetState extends State<AIChatWidget> {
       );
       _addMessage(aiResponse);
     } catch (e) {
+      // Check if widget is still mounted before updating UI
+      if (!mounted) return;
+
       // Remove typing indicator
       setState(() {
         _messages.removeWhere((msg) => msg.id == 'typing');
@@ -119,12 +126,16 @@ class _AIChatWidgetState extends State<AIChatWidget> {
   }
 
   void _handleVoicePressed() async {
-    try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      final userId = authService.currentUser?.id;
+    // Get services and context-dependent values before async operations
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final aiTaskService = Provider.of<AITaskService>(context, listen: false);
+    final userId = authService.currentUser?.id;
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
 
+    try {
       if (userId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessenger.showSnackBar(
           const SnackBar(
             content: Text('Please log in to use voice features'),
             backgroundColor: Colors.red,
@@ -133,14 +144,30 @@ class _AIChatWidgetState extends State<AIChatWidget> {
         return;
       }
 
-      final aiTaskService = Provider.of<AITaskService>(context, listen: false);
+      // Check speech availability first
+      final isAvailable = await aiTaskService.speechService.checkAvailability();
+
+      if (!mounted) return;
+
+      if (!isAvailable) {
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Speech recognition is not available. Please check microphone permissions in Settings.',
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 5),
+          ),
+        );
+        return;
+      }
 
       // Show voice input dialog
       showDialog(
         context: context,
         barrierDismissible: false,
         builder:
-            (context) => AlertDialog(
+            (dialogContext) => AlertDialog(
               title: const Text('Voice Input'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -148,10 +175,15 @@ class _AIChatWidgetState extends State<AIChatWidget> {
                   Icon(
                     Icons.mic,
                     size: 64,
-                    color: Theme.of(context).primaryColor,
+                    color: Theme.of(dialogContext).primaryColor,
                   ),
                   const SizedBox(height: 16),
                   const Text('Speak your message...'),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Tap Cancel to stop listening',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
                   const SizedBox(height: 16),
                   const CircularProgressIndicator(),
                 ],
@@ -160,7 +192,7 @@ class _AIChatWidgetState extends State<AIChatWidget> {
                 TextButton(
                   onPressed: () {
                     aiTaskService.speechService.cancelListening();
-                    Navigator.of(context).pop();
+                    Navigator.of(dialogContext).pop();
                   },
                   child: const Text('Cancel'),
                 ),
@@ -174,24 +206,51 @@ class _AIChatWidgetState extends State<AIChatWidget> {
         prompt: "What would you like to say?",
       );
 
-      if (mounted) {
-        Navigator.of(context).pop(); // Close dialog
+      if (!mounted) return;
 
-        if (voiceInput != null && voiceInput.trim().isNotEmpty) {
-          _handleSendPressed(types.PartialText(text: voiceInput));
+      navigator.pop(); // Close dialog
+
+      if (voiceInput != null && voiceInput.trim().isNotEmpty) {
+        _handleSendPressed(types.PartialText(text: voiceInput));
+      } else {
+        // If normal method failed, try simple method as fallback
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No speech detected with normal method. Trying simple method...',
+            ),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        // Try simple test method
+        final simpleResult =
+            await aiTaskService.speechService.testSimpleListen();
+
+        if (simpleResult != null && simpleResult.trim().isNotEmpty) {
+          _handleSendPressed(types.PartialText(text: simpleResult));
+        } else {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text(
+                'No speech detected. Please check microphone permissions and try again.',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
       }
     } catch (e) {
-      if (mounted) {
-        Navigator.of(context).pop(); // Close dialog if open
-        final messenger = ScaffoldMessenger.of(context);
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text('Voice input error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+
+      navigator.pop(); // Close dialog if open
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Voice input error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -229,6 +288,8 @@ class _AIChatWidgetState extends State<AIChatWidget> {
           ),
           PopupMenuButton<String>(
             onSelected: (value) {
+              if (!mounted) return;
+
               switch (value) {
                 case 'clear':
                   setState(() {
@@ -238,6 +299,9 @@ class _AIChatWidgetState extends State<AIChatWidget> {
                   break;
                 case 'help':
                   _showHelpDialog();
+                  break;
+                case 'debug_speech':
+                  _debugSpeech();
                   break;
               }
             },
@@ -260,6 +324,16 @@ class _AIChatWidgetState extends State<AIChatWidget> {
                         Icon(Icons.help),
                         SizedBox(width: 8),
                         Text('Help'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'debug_speech',
+                    child: Row(
+                      children: [
+                        Icon(Icons.bug_report),
+                        SizedBox(width: 8),
+                        Text('Debug Speech'),
                       ],
                     ),
                   ),
@@ -307,10 +381,12 @@ class _AIChatWidgetState extends State<AIChatWidget> {
   }
 
   void _showHelpDialog() {
+    if (!mounted) return;
+
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
+          (dialogContext) => AlertDialog(
             title: const Text('TaskoroAI Help'),
             content: const SingleChildScrollView(
               child: Column(
@@ -354,11 +430,83 @@ class _AIChatWidgetState extends State<AIChatWidget> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => Navigator.of(dialogContext).pop(),
                 child: const Text('Got it'),
               ),
             ],
           ),
     );
+  }
+
+  void _debugSpeech() async {
+    final aiTaskService = Provider.of<AITaskService>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('Speech Debug Test'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Running simple speech recognition test...'),
+                const SizedBox(height: 8),
+                const Text(
+                  'Speak clearly when prompted.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(height: 16),
+                const CircularProgressIndicator(),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+            ],
+          ),
+    );
+
+    try {
+      // Run the simple speech test first
+      print('=== STARTING SIMPLE SPEECH TEST ===');
+      final simpleResult = await aiTaskService.speechService.testSimpleListen();
+
+      print('=== SIMPLE TEST RESULT: "$simpleResult" ===');
+
+      // Also run the comprehensive test for comparison
+      await aiTaskService.speechService.testBasicSpeech();
+
+      if (!mounted) return;
+      Navigator.of(context).pop();
+
+      final resultMessage =
+          simpleResult != null
+              ? 'Speech test completed! Captured: "$simpleResult"'
+              : 'Speech test completed but no speech was captured. Check logs.';
+
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text(resultMessage),
+          backgroundColor: simpleResult != null ? Colors.green : Colors.orange,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context).pop();
+
+      print('DEBUG SPEECH TEST ERROR: $e');
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Speech debug test failed: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
   }
 }

@@ -319,7 +319,8 @@ class AITaskService extends ChangeNotifier {
     try {
       // Check if the message is a task creation request
       final lowerMessage = message.toLowerCase();
-      final isTaskCreationRequest = lowerMessage.contains('create') ||
+      final isTaskCreationRequest =
+          lowerMessage.contains('create') ||
           lowerMessage.contains('add') ||
           lowerMessage.contains('new task') ||
           lowerMessage.contains('make a task') ||
@@ -335,7 +336,7 @@ class AITaskService extends ChangeNotifier {
           );
 
           if (createdTask != null) {
-            _lastAIResponse = 
+            _lastAIResponse =
                 "Perfect! I've created the task '${createdTask.title}' for you.\n\n"
                 "📋 **Task Details:**\n"
                 "• **Title:** ${createdTask.title}\n"
@@ -348,7 +349,9 @@ class AITaskService extends ChangeNotifier {
             return _lastAIResponse;
           } else {
             // Fall back to conversational AI if task creation failed
-            debugPrint('Task creation failed, falling back to conversational AI');
+            debugPrint(
+              'Task creation failed, falling back to conversational AI',
+            );
           }
         } catch (e) {
           debugPrint('Task creation from chat failed: $e');
@@ -356,7 +359,7 @@ class AITaskService extends ChangeNotifier {
         }
       }
 
-      // For non-task-creation requests or if task creation failed, 
+      // For non-task-creation requests or if task creation failed,
       // provide conversational AI response
       Map<String, dynamic>? context;
 
