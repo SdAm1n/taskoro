@@ -207,7 +207,7 @@ class _TeamsScreenState extends State<TeamsScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -255,7 +255,7 @@ class _TeamsScreenState extends State<TeamsScreen> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: AppTheme.primaryColor.withOpacity(0.2),
+                                color: AppTheme.primaryColor.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -410,7 +410,7 @@ class _TeamsScreenState extends State<TeamsScreen> {
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.2),
+                          color: AppTheme.primaryColor.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                           border: Border.all(
                             color:
@@ -439,7 +439,7 @@ class _TeamsScreenState extends State<TeamsScreen> {
                       height: 32,
                       margin: EdgeInsets.only(right: index < 4 ? 4 : 0),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withOpacity(0.8),
+                        color: AppTheme.primaryColor.withValues(alpha: 0.8),
                         shape: BoxShape.circle,
                         border: Border.all(
                           color:
@@ -564,10 +564,10 @@ class _TeamsScreenState extends State<TeamsScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.accentYellow.withOpacity(0.1),
+        color: AppTheme.accentYellow.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.accentYellow.withOpacity(0.3),
+          color: AppTheme.accentYellow.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -1017,7 +1017,7 @@ class _TeamsScreenState extends State<TeamsScreen> {
                                       CircleAvatar(
                                         radius: 16,
                                         backgroundColor: AppTheme.primaryColor
-                                            .withOpacity(0.8),
+                                            .withValues(alpha: 0.8),
                                         child: Text(
                                           member.displayName.isNotEmpty
                                               ? member.displayName[0]
@@ -1071,7 +1071,7 @@ class _TeamsScreenState extends State<TeamsScreen> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: AppTheme.primaryColor
-                                              .withOpacity(0.2),
+                                              .withValues(alpha: 0.2),
                                           borderRadius: BorderRadius.circular(
                                             12,
                                           ),

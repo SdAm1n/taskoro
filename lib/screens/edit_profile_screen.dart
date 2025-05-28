@@ -83,7 +83,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           );
         }
       } catch (e) {
-        print('Edit Profile Error: $e'); // Debug log
+        debugPrint('Edit Profile Error: $e'); // Debug log
 
         // Close loading dialog
         if (mounted) Navigator.of(context).pop();
@@ -188,6 +188,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             TextButton(
               onPressed: () async {
                 if (passwordFormKey.currentState!.validate()) {
+                  // Capture context and messenger before async operations
+                  final navigator = Navigator.of(dialogContext);
+                  final messenger = ScaffoldMessenger.of(context);
+
                   try {
                     // Show loading indicator
                     showDialog(
@@ -206,14 +210,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     );
 
                     // Close loading dialog
-                    if (mounted) Navigator.of(dialogContext).pop();
+                    if (mounted) navigator.pop();
 
                     // Close password dialog
-                    if (mounted) Navigator.of(dialogContext).pop();
+                    if (mounted) navigator.pop();
 
                     // Show success message
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         const SnackBar(
                           content: Text('Password changed successfully'),
                           duration: Duration(seconds: 2),
@@ -222,11 +226,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     }
                   } catch (e) {
                     // Close loading dialog
-                    if (mounted) Navigator.of(dialogContext).pop();
+                    if (mounted) navigator.pop();
 
                     // Show error message
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         SnackBar(
                           content: Text('Failed to change password: $e'),
                           duration: const Duration(seconds: 3),

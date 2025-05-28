@@ -171,14 +171,14 @@ class TaskProvider extends ChangeNotifier {
             },
           );
 
-      print(
+      debugPrint(
         'TaskProvider: Task created successfully with ID: $taskId',
       ); // Debug log
 
       // The task will be automatically added to _tasks via the stream listener
       return taskId;
     } catch (e) {
-      print('TaskProvider: Error adding task: $e'); // Debug log
+      debugPrint('TaskProvider: Error adding task: $e'); // Debug log
       // Debug: Error adding task: $e
       rethrow; // Re-throw so the UI can handle the error
     } finally {
@@ -210,15 +210,15 @@ class TaskProvider extends ChangeNotifier {
     try {
       // First, check if task exists
       if (!_tasks.any((task) => task.id == taskId)) {
-        print('Task $taskId already deleted or not found');
+        debugPrint('Task $taskId already deleted or not found');
         return true; // Task already deleted
       }
 
-      print('Deleting task $taskId from Firebase...');
+      debugPrint('Deleting task $taskId from Firebase...');
       // Delete from Firebase
       await _taskService.deleteTask(taskId);
 
-      print('Waiting for stream to update after deletion of task $taskId...');
+      debugPrint('Waiting for stream to update after deletion of task $taskId...');
       // Wait for the stream listener to update _tasks by polling
       // with a reasonable timeout to avoid infinite waiting
       const maxWaitTime = Duration(seconds: 5);
@@ -227,7 +227,7 @@ class TaskProvider extends ChangeNotifier {
 
       while (_tasks.any((task) => task.id == taskId)) {
         if (DateTime.now().difference(startTime) > maxWaitTime) {
-          print(
+          debugPrint(
             'Timeout waiting for stream update, forcing local removal of task $taskId',
           );
           // Timeout reached, but deletion likely succeeded in Firebase
@@ -239,10 +239,10 @@ class TaskProvider extends ChangeNotifier {
         await Future.delayed(pollInterval);
       }
 
-      print('Task $taskId successfully deleted and removed from UI');
+      debugPrint('Task $taskId successfully deleted and removed from UI');
       return true;
     } catch (e) {
-      print('Error deleting task $taskId: $e');
+      debugPrint('Error deleting task $taskId: $e');
       return false;
     }
   }
@@ -283,26 +283,26 @@ class TaskProvider extends ChangeNotifier {
   // Update user information
   Future<void> updateUser(AppUser updatedUser) async {
     try {
-      print(
+      debugPrint(
         'TaskProvider: Starting user update for ${updatedUser.displayName}',
       );
 
       // Update Firebase Auth profile (only displayName, not email)
-      print('TaskProvider: Updating Firebase Auth profile...');
+      debugPrint('TaskProvider: Updating Firebase Auth profile...');
       await _authService.updateProfile(displayName: updatedUser.displayName);
-      print('TaskProvider: Firebase Auth profile updated successfully');
+      debugPrint('TaskProvider: Firebase Auth profile updated successfully');
 
       // Update Firestore user profile
-      print('TaskProvider: Updating Firestore user profile...');
+      debugPrint('TaskProvider: Updating Firestore user profile...');
       await _userService.updateUserProfile(updatedUser);
-      print('TaskProvider: Firestore user profile updated successfully');
+      debugPrint('TaskProvider: Firestore user profile updated successfully');
 
       // Update local state
       _currentUser = updatedUser;
       notifyListeners();
-      print('TaskProvider: User update completed successfully');
+      debugPrint('TaskProvider: User update completed successfully');
     } catch (e) {
-      print('TaskProvider: Error updating user: $e');
+      debugPrint('TaskProvider: Error updating user: $e');
       // Re-throw the error so the UI can handle it
       rethrow;
     }

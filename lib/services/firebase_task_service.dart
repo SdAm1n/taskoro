@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import '../models/task.dart';
 
 class FirebaseTaskService {
@@ -14,22 +15,26 @@ class FirebaseTaskService {
 
   // Create a new task
   Future<String> createTask(Task task) async {
-    print('FirebaseTaskService: Starting task creation'); // Debug log
+    debugPrint('FirebaseTaskService: Starting task creation'); // Debug log
 
     if (_currentUserId == null) {
-      print('FirebaseTaskService: No authenticated user found'); // Debug log
+      debugPrint(
+        'FirebaseTaskService: No authenticated user found',
+      ); // Debug log
       throw Exception('User not authenticated');
     }
 
     try {
-      print(
+      debugPrint(
         'FirebaseTaskService: Creating task for user: $_currentUserId',
       ); // Debug log
 
       // Generate a new task ID if not provided
       final taskId = task.id.isEmpty ? _tasksCollection.doc().id : task.id;
 
-      print('FirebaseTaskService: Generated task ID: $taskId'); // Debug log
+      debugPrint(
+        'FirebaseTaskService: Generated task ID: $taskId',
+      ); // Debug log
 
       // Create task with user ownership
       final taskData = task.copyWith(id: taskId).toMap();
@@ -38,10 +43,10 @@ class FirebaseTaskService {
       taskData['createdAt'] = DateTime.now().millisecondsSinceEpoch;
       taskData['updatedAt'] = DateTime.now().millisecondsSinceEpoch;
 
-      print(
+      debugPrint(
         'FirebaseTaskService: Task data prepared, writing to Firestore',
       ); // Debug log
-      print(
+      debugPrint(
         'FirebaseTaskService: Task data: ${taskData.keys.join(', ')}',
       ); // Debug log
 
@@ -52,7 +57,7 @@ class FirebaseTaskService {
           .timeout(
             const Duration(seconds: 15),
             onTimeout: () {
-              print(
+              debugPrint(
                 'FirebaseTaskService: Firestore write operation timed out',
               ); // Debug log
               throw Exception(
@@ -61,14 +66,16 @@ class FirebaseTaskService {
             },
           );
 
-      print(
+      debugPrint(
         'FirebaseTaskService: Task created successfully with ID: $taskId',
       ); // Debug log
 
       return taskId;
     } catch (e) {
-      print('FirebaseTaskService: Error creating task: $e'); // Debug log
-      print('FirebaseTaskService: Error type: ${e.runtimeType}'); // Debug log
+      debugPrint('FirebaseTaskService: Error creating task: $e'); // Debug log
+      debugPrint(
+        'FirebaseTaskService: Error type: ${e.runtimeType}',
+      ); // Debug log
       throw Exception('Failed to create task: $e');
     }
   }

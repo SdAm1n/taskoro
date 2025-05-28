@@ -25,7 +25,7 @@ android {
         applicationId = "com.taskoro.taskoro"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 21
+        minSdk = 23 // Updated from 21 for compatibility with firebase_auth 5.5.4
         targetSdk = flutter.targetSdkVersion
         versionCode = 1
         versionName = "1.0.0"

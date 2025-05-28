@@ -115,7 +115,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
         } else {
           // Add task and wait for the result
           final taskId = await taskProvider.addTask(task);
-          print('Task created with ID: $taskId'); // Debug log
+          debugPrint('Task created with ID: $taskId'); // Debug log
         }
 
         if (mounted) {
@@ -138,7 +138,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           );
         }
       } catch (e) {
-        print('AddEditTaskScreen: Error in _saveTask: $e'); // Debug log
+        debugPrint('AddEditTaskScreen: Error in _saveTask: $e'); // Debug log
         if (mounted) {
           setState(() {
             _isSaving = false;

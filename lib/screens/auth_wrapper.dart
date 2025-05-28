@@ -14,10 +14,10 @@ class AuthWrapper extends StatelessWidget {
       builder: (context, snapshot) {
         // Debug logging in development
         if (kDebugMode) {
-          print('AuthWrapper - Connection state: ${snapshot.connectionState}');
-          print('AuthWrapper - Has data: ${snapshot.hasData}');
-          print('AuthWrapper - User: ${snapshot.data?.uid}');
-          print('AuthWrapper - User email: ${snapshot.data?.email}');
+          debugPrint('AuthWrapper - Connection state: ${snapshot.connectionState}');
+          debugPrint('AuthWrapper - Has data: ${snapshot.hasData}');
+          debugPrint('AuthWrapper - User: ${snapshot.data?.uid}');
+          debugPrint('AuthWrapper - User email: ${snapshot.data?.email}');
         }
 
         // Show loading while checking auth state
@@ -39,7 +39,7 @@ class AuthWrapper extends StatelessWidget {
         // Handle errors
         if (snapshot.hasError) {
           if (kDebugMode) {
-            print('AuthWrapper - Error: ${snapshot.error}');
+            debugPrint('AuthWrapper - Error: ${snapshot.error}');
           }
           return const Scaffold(
             body: Center(
@@ -60,14 +60,14 @@ class AuthWrapper extends StatelessWidget {
         // User is signed in
         if (snapshot.hasData && snapshot.data != null) {
           if (kDebugMode) {
-            print('AuthWrapper - User authenticated, showing MainScreen');
+            debugPrint('AuthWrapper - User authenticated, showing MainScreen');
           }
           return const MainScreen();
         }
 
         // User is not signed in
         if (kDebugMode) {
-          print('AuthWrapper - No user, showing LoginScreen');
+          debugPrint('AuthWrapper - No user, showing LoginScreen');
         }
         return const LoginScreen();
       },

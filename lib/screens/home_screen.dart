@@ -5,6 +5,9 @@ import '../models/task.dart';
 import '../services/task_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/task_card.dart';
+import '../widgets/ai_task_suggestions_widget.dart';
+import '../widgets/ai_chat_widget.dart';
+import '../widgets/voice_task_creation_widget.dart';
 import '../utils/task_deletion_state.dart';
 import '../localization/translation_helper.dart';
 import 'notifications_screen.dart';
@@ -126,6 +129,287 @@ class _HomeScreenState extends State<HomeScreen> {
   String _getRemainingDays(DateTime endDate) {
     final difference = endDate.difference(DateTime.now()).inDays;
     return '$difference ${difference == 1 ? context.tr('day') : context.tr('days')}';
+  }
+
+  // Helper method to get AI suggestions context
+  String? _getAISuggestionsContext() {
+    switch (_selectedIndex) {
+      case 1:
+        return 'Today';
+      case 2:
+        return 'Upcoming';
+      case 3:
+        return 'Personal';
+      case 4:
+        return 'Team';
+      default:
+        return null;
+    }
+  }
+
+  // Method to show AI assistant modal
+  void _showAIAssistantModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder:
+          (context) => Container(
+            height:
+                MediaQuery.of(context).size.height *
+                0.4, // Increased slightly for better content fit
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Handle bar
+                  Container(
+                    margin: const EdgeInsets.only(top: 8, bottom: 8),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.smart_toy,
+                          color: Theme.of(context).primaryColor,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'TaskoroAI Assistant',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white
+                                      : Colors.black87,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Content area with flexible height
+                  Flexible(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Chat Option
+                          Flexible(
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const AIChatWidget(),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                width: double.infinity,
+                                constraints: const BoxConstraints(
+                                  minHeight: 80,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Theme.of(
+                                        context,
+                                      ).primaryColor.withValues(alpha: 0.1),
+                                      Theme.of(
+                                        context,
+                                      ).primaryColor.withValues(alpha: 0.05),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: Theme.of(
+                                      context,
+                                    ).primaryColor.withValues(alpha: 0.2),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.chat_bubble_outline,
+                                        color: Theme.of(context).primaryColor,
+                                        size: 28,
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        'Chat with AI',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: Theme.of(context).primaryColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Ask questions, get help',
+                                        style:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.bodySmall,
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // Voice Task Creation Option
+                          Flexible(
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.transparent,
+                                  builder:
+                                      (context) => Container(
+                                        height:
+                                            MediaQuery.of(context).size.height *
+                                            0.55,
+                                        decoration: BoxDecoration(
+                                          color:
+                                              Theme.of(
+                                                context,
+                                              ).scaffoldBackgroundColor,
+                                          borderRadius: const BorderRadius.only(
+                                            topLeft: Radius.circular(20),
+                                            topRight: Radius.circular(20),
+                                          ),
+                                        ),
+                                        child: const SafeArea(
+                                          child: Padding(
+                                            padding: EdgeInsets.only(
+                                              bottom: 16,
+                                            ),
+                                            child: VoiceTaskCreationWidget(),
+                                          ),
+                                        ),
+                                      ),
+                                );
+                              },
+                              child: Container(
+                                width: double.infinity,
+                                constraints: const BoxConstraints(
+                                  minHeight: 80,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Theme.of(
+                                        context,
+                                      ).primaryColor.withValues(alpha: 0.15),
+                                      Theme.of(
+                                        context,
+                                      ).primaryColor.withValues(alpha: 0.08),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: Theme.of(
+                                      context,
+                                    ).primaryColor.withValues(alpha: 0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.mic,
+                                        color: Theme.of(context).primaryColor,
+                                        size: 28,
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        'Voice Task Creation',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: Theme.of(context).primaryColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Speak to create tasks',
+                                        style:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.bodySmall,
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          ),
+    );
   }
 
   // Build the priority task card
@@ -634,6 +918,20 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(height: 16),
                                   ],
 
+                                  // AI Task Suggestions Section
+                                  SizedBox(
+                                    height:
+                                        120, // Fixed height to prevent overflow
+                                    child: AITaskSuggestionsWidget(
+                                      context: _getAISuggestionsContext(),
+                                      onSuggestionSelected: (suggestion) {
+                                        // Refresh tasks after AI suggestion is used
+                                        _updateFilteredTasks();
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+
                                   // Filter tabs
                                   SizedBox(
                                     height: 40,
@@ -836,17 +1134,32 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-            floatingActionButton: FloatingActionButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/add_task').then((_) {
-                  // Refresh the task list when returning from add task screen
-                  if (mounted) {
-                    _updateFilteredTasks();
-                  }
-                });
-              },
-              backgroundColor: AppTheme.primaryColor,
-              child: const Icon(Icons.add, color: Colors.white),
+            floatingActionButton: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // AI Assistant FAB
+                FloatingActionButton(
+                  heroTag: "ai_assistant",
+                  onPressed: _showAIAssistantModal,
+                  backgroundColor: AppTheme.primaryColor,
+                  child: const Icon(Icons.smart_toy, color: Colors.white),
+                ),
+                const SizedBox(height: 16),
+                // Add Task FAB
+                FloatingActionButton(
+                  heroTag: "add_task",
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/add_task').then((_) {
+                      // Refresh the task list when returning from add task screen
+                      if (mounted) {
+                        _updateFilteredTasks();
+                      }
+                    });
+                  },
+                  backgroundColor: AppTheme.primaryColor,
+                  child: const Icon(Icons.add, color: Colors.white),
+                ),
+              ],
             ),
           ),
         );

@@ -12,6 +12,7 @@ import 'services/theme_provider.dart';
 import 'services/language_provider.dart';
 import 'services/team_provider.dart';
 import 'services/auth_service.dart';
+import 'services/ai_task_service.dart';
 import 'theme/app_theme.dart';
 import 'utils/custom_page_route.dart';
 import 'package:flutter/services.dart';
@@ -53,6 +54,7 @@ class MyApp extends StatelessWidget {
           create: (context) => LanguageProvider()..initLanguage(),
         ),
         ChangeNotifierProvider(create: (context) => TeamProvider()),
+        ChangeNotifierProvider(create: (context) => AITaskService()),
       ],
       child: Consumer2<ThemeProvider, LanguageProvider>(
         builder: (context, themeProvider, languageProvider, _) {

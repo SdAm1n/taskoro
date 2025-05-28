@@ -178,7 +178,7 @@ class _LocationPickerState extends State<LocationPicker> {
 
   Widget _buildGoogleMapWithErrorHandling() {
     try {
-      return Container(
+      return SizedBox(
         width: double.infinity,
         height: double.infinity,
         child: GoogleMap(
